@@ -1,0 +1,25 @@
+body {
+  margin: 0;
+  background: #000;
+  overflow: hidden; /* กันหน้าจอเลื่อนขึ้นลง */
+  touch-action: none; /* ปิดระบบ swipe ของ browser เพื่อไม่ให้รบกวนเกม */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+canvas {
+  background: radial-gradient(circle, #1b2735 0%, #090a0f 100%);
+  display: block;
+  /* ปรับให้ขนาดพอดีกับจอมือถือมากที่สุด */
+  max-width: 95vw;
+  max-height: 80vh;
+  border: 1px solid #333;
+}
+
+/* ส่วนอื่นๆ เหมือนเดิม */
+.ui-container { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 5; }
+.score-board { font-size: 22px; color: #00f2fe; font-family: sans-serif; }
+.pause-button { padding: 10px 20px; background: rgba(255,255,255,0.1); border: 1px solid #00f2fe; color: #00f2fe; border-radius: 20px; margin-top: 5px; }
+.countdown-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; color: #00f2fe; z-index: 10; font-family: sans-serif; }
