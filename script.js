@@ -19,18 +19,15 @@ let isInvincible = false;
 let items = [];
 let tripleShotTimer = 0;
 let hasShield = false;
-const itemTypes = [
-    { label: "P", color: "#00ff00" }, // Triple Shot
+
+// ข้อมูลไอเทมแบบง่าย
+const itemData = [
+    { label: "P", color: "#00ff00" }, // Triple
     { label: "S", color: "#00d9ff" }, // Shield
     { label: "B", color: "#ff8c00" }  // Bomb
 ];
 
-const player = { 
-    x: 0, y: 0, w: 40, h: 40, 
-    color: "#00f2fe",
-    baseColor: "#00f2fe" 
-};
-
+const player = { x: 0, y: 0, w: 40, h: 40, color: "#00f2fe", baseColor: "#00f2fe" };
 let bullets = [];
 let enemies = [];
 
@@ -69,7 +66,7 @@ function triggerScreenShake() {
     canvas.classList.add("shake");
 }
 
-// --- 3. ฟังก์ชันหลักในการวาด ---
+// --- 3. Loop หลักของเกม ---
 function draw() {
     if (!gameActive) return;
     if (isPaused) {
@@ -80,7 +77,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawUI();
 
-    // วาดเกราะ
+    // วาดโล่ถ้ามี
     if (hasShield) {
         ctx.strokeStyle = "#00d9ff";
         ctx.lineWidth = 3;
@@ -98,26 +95,31 @@ function draw() {
     // --- จัดการไอเทม ---
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i];
-        it.y += 2; // ไอเทมตกลงมา
+        it.y += 2.5; // ความเร็วไอเทมตกลงมา
         
-        // วาดวงกลมไอเทม
+        // วาดไอเทมเป็นวงกลมเรืองแสง
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = it.color;
         ctx.fillStyle = it.color;
         ctx.beginPath();
         ctx.arc(it.x, it.y, 15, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0; // ปิดเงา
+
         ctx.fillStyle = "white";
         ctx.font = "bold 14px Arial";
         ctx.textAlign = "center";
         ctx.fillText(it.label, it.x, it.y + 5);
 
-        // เช็คเก็บไอเทม
-        if (it.x > player.x && it.x < player.x + player.w &&
-            it.y > player.y && it.y < player.y + player.h) {
+        // เช็คการเก็บไอเทม (Collision)
+        if (it.x + 15 > player.x && it.x - 15 < player.x + player.w &&
+            it.y + 15 > player.y && it.y - 15 < player.y + player.h) {
             
-            if (it.label === "P") tripleShotTimer = 400;
-            if (it.label === "S") hasShield = true;
-            if (it.label === "B") { enemies = []; triggerScreenShake(); score += 50; }
+            if (it.label === "P") { tripleShotTimer = 400; }
+            if (it.label === "S") { hasShield = true; }
+            if (it.label === "B") { enemies = []; triggerScreenShake(); score += 100; }
             
+            console.log("Item Collected: " + it.label);
             items.splice(i, 1);
             continue;
         }
@@ -136,9 +138,8 @@ function draw() {
     });
 
     // จัดการศัตรู
-    let spawnRate = 0.04 + (score / 15000);
-    if (Math.random() < Math.min(spawnRate, 0.15)) {
-        enemies.push({ x: Math.random() * (canvas.width - 40), y: -40, w: 40, h: 40, speed: 4 + (score / 1500) });
+    if (Math.random() < 0.05) { // สุ่มเกิดศัตรู
+        enemies.push({ x: Math.random() * (canvas.width - 40), y: -40, w: 40, h: 40, speed: 3 + (score / 2000) });
     }
 
     enemies.forEach((en, i) => {
@@ -161,24 +162,20 @@ function draw() {
                 setTimeout(() => { player.color = player.baseColor; }, 200);
             }
 
-            if (lives <= 0) {
-                gameActive = false;
-                setTimeout(gameOver, 10);
-                return;
-            } else {
-                isInvincible = true;
-                setTimeout(() => { isInvincible = false; }, 1500);
-            }
+            if (lives <= 0) { gameActive = false; setTimeout(gameOver, 10); return; } 
+            else { isInvincible = true; setTimeout(() => { isInvincible = false; }, 1500); }
         }
 
         // กระสุนชนศัตรู
         bullets.forEach((b, bi) => {
             if (b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
                 
-                // --- เพิ่มโอกาสดรอปไอเทมเป็น 30% (เพื่อความชัดเจน) ---
-                if (Math.random() < 0.3) {
-                    let type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
-                    items.push({ x: en.x + 20, y: en.y + 20, label: type.label, color: type.color });
+                // --- เพิ่มโอกาสดรอปไอเทม (ปรับเป็น 40% เพื่อให้เห็นชัดๆ) ---
+                if (Math.random() < 0.4) {
+                    let rand = Math.floor(Math.random() * itemData.length);
+                    let drop = itemData[rand];
+                    items.push({ x: en.x + 20, y: en.y + 20, label: drop.label, color: drop.color });
+                    console.log("Item Spawned: " + drop.label);
                 }
 
                 enemies.splice(i, 1);
@@ -221,7 +218,7 @@ function startCountdown() {
 }
 
 function gameOver() {
-    alert("Game Over! Score: " + score);
+    alert("จบเกม! คะแนนของคุณคือ: " + score);
     resetGame();
 }
 
@@ -235,6 +232,7 @@ function resetGame() {
     startCountdown();
 }
 
+// การควบคุม
 setInterval(() => { if (gameActive && !isPaused) shoot(); }, 200);
 window.addEventListener("mousemove", (e) => { player.x = e.clientX - player.w/2; });
 window.addEventListener("touchmove", (e) => { 
