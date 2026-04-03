@@ -76,6 +76,12 @@ function drawUI() {
 function draw() {
     if (!gameActive) return;
 
+    if (gameActive && !isPaused) {
+    if (tripleShotTimer > 0) {
+        tripleShotTimer--;
+    }
+}
+
     if (isPaused) {
         // หน้า Pause สีฟ้าใส (0.05) และแถบดำด้านบนกัน UI กลืน
         ctx.fillStyle = "rgba(0, 242, 254, 0.05)"; 
@@ -226,12 +232,10 @@ function draw() {
 
 function shoot() {
     if (tripleShotTimer > 0) {
-        tripleShotTimer--;
         bullets.push({ x: player.x + player.w/2 - 3, y: player.y, w: 6, h: 15, vx: 0 });
         bullets.push({ x: player.x, y: player.y, w: 6, h: 15, vx: -3 });
         bullets.push({ x: player.x + player.w, y: player.y, w: 6, h: 15, vx: 3 });
     } else {
-        tripleShotTimer = 0;
         bullets.push({ x: player.x + player.w/2 - 3, y: player.y, w: 6, h: 15, vx: 0 });
     }
 }
