@@ -1,3 +1,11 @@
+const scoreElement = document.getElementById("score");
+const highScoreElement = document.getElementById("highScore"); // เพิ่มอันนี้
+
+let score = 0;
+// ดึงคะแนนจากเครื่องมาโชว์ ถ้าไม่มีให้เป็น 0
+let highScore = localStorage.getItem("spaceHighScore") || 0;
+highScoreElement.innerText = highScore;
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
@@ -128,9 +136,19 @@ function update() {
 }
 
 function resetGame() {
-  score = 0; scoreElement.innerText = score;
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("spaceHighScore", highScore);
+    highScoreElement.innerText = highScore; // อัปเดตตัวเลขบนหน้าจอทันที
+    alert("ทำลายสถิติใหม่! " + highScore + " คะแนน");
+  }
+  
+  score = 0;
+  scoreElement.innerText = score;
+  // ... (โค้ดรีเซ็ตอื่นๆ เหมือนเดิม) ...
   player.x = canvas.width / 2 - 20;
-  bullets = []; enemies = [];
+  bullets = [];
+  enemies = [];
   startCountdown();
 }
 
