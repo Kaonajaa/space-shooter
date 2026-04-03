@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="stylesheet" href="style.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter - IT Project</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="ui-container">
-    <div class="score-board">
-        <div>คะแนน: <span id="score">0</span></div>
-        <div class="high-score">สูงสุด: <span id="highScore">0</span></div>
+    <div id="game-container">
+        <div id="ui">
+            <div class="score-box">คะแนน: <span id="score">0</span></div>
+            <div class="high-score">สูงสุด: <span id="highScore">0</span></div>
+        </div>
+        
+        <button id="pauseBtn">หยุดเกม</button>
+        <div id="countdown"></div>
+        
+        <canvas id="gameCanvas"></canvas>
     </div>
-    <button id="pauseBtn" class="pause-button">หยุดเกม</button>
-</div>
-
-<div id="countdown" class="countdown-overlay"></div>
-<canvas id="gameCanvas"></canvas>
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
