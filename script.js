@@ -67,12 +67,23 @@ function draw() {
     });
 
     // จัดการศัตรู
-    if (Math.random() < 0.04) {
-        enemies.push({ x: Math.random() * (canvas.width - 40), y: -40, w: 40, h: 40 });
-    }
+   // ยิ่งคะแนนเยอะ โอกาสเกิดศัตรูจะเพิ่มขึ้น (สูงสุดที่ 0.1 หรือ 10%)
+let spawnRate = 0.04 + (score / 10000); 
+if (spawnRate > 0.1) spawnRate = 0.1; 
+
+if (Math.random() < spawnRate) {
+    // เพิ่มค่าความเร็ว (speed) เข้าไปใน Object ศัตรูด้วย
+    enemies.push({ 
+        x: Math.random() * (canvas.width - 40), 
+        y: -40, 
+        w: 40, 
+        h: 40,
+        speed: 4 + (score / 500) // ทุกๆ 500 คะแนน จะวิ่งเร็วขึ้น 1 ระดับ
+    });
+}
 
     enemies.forEach((en, i) => {
-        en.y += 4;
+        en.y += en.speed;
         ctx.fillStyle = "#ff0000";
         ctx.fillRect(en.x, en.y, en.w, en.h);
 
