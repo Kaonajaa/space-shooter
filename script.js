@@ -13,6 +13,8 @@ let gameActive = false;
 let isPaused = false;
 let lives = 3;
 let isInvincible = false;
+let screenShakeTime = 0; // เวลาที่เหลือในการสั่น
+const screenShakeIntensity = 10; // ความแรงของการสั่น
 
 const player = { x: 0, y: 0, w: 40, h: 40, color: "#00f2fe" };
 let bullets = [];
@@ -28,26 +30,27 @@ window.addEventListener("resize", resize);
 resize();
 
 // --- ฟังก์ชันวาดหัวใจใต้ปีกยาน ---
+// --- แก้ไขฟังก์ชัน drawPlayerLives ---
 function drawPlayerLives() {
     for (let i = 0; i < lives; i++) {
-        // คำนวณตำแหน่งหัวใจให้เกาะกลุ่มอยู่ใต้กลางยาน
-        let hX = player.x + (i * 18) + (player.w / 2) - (lives * 9);
-        let hY = player.y + player.h + 15;
+        // คำนวณตำแหน่งให้กลาง
+        let hX = player.x + (i * 20) + (player.w / 2) - (lives * 10);
+        let hY = player.y + player.h + 10;
         
         ctx.fillStyle = "#ff4d4d"; // สีแดงหัวใจ
         ctx.beginPath();
-        // วาดรูปหัวใจดวงเล็กๆ
-        ctx.arc(hX - 4, hY, 4, 0, Math.PI * 2);
-        ctx.arc(hX + 4, hY, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(hX - 8, hY + 2);
-        ctx.lineTo(hX, hY + 10);
-        ctx.lineTo(hX + 8, hY + 2);
+        
+        // --- โค้ดใหม่: วาดรูปหัวใจที่สมมาตร ---
+        ctx.moveTo(hX, hY + 12); // ปลายแหลมล่าง
+        
+        // ฝั่งซ้าย
+        ctx.bezierCurveTo(hX - 6, hY + 7, hX - 8, hY + 2, hX, hY);
+        // ฝั่งขวา
+        ctx.bezierCurveTo(hX + 8, hY + 2, hX + 6, hY + 7, hX, hY + 12);
+        
         ctx.fill();
     }
 }
-
 function startCountdown() {
     let count = 3;
     countdownEl.style.display = "flex";
@@ -107,22 +110,30 @@ function draw() {
         ctx.fillRect(en.x, en.y, en.w, en.h);
 
         // เช็คชนยาน
-        if (!isInvincible && 
-            en.x < player.x + player.w && en.x + en.w > player.x &&
-            en.y < player.y + player.h && en.y + en.h > player.y) {
-            
-            enemies.splice(i, 1);
-            lives--;
-            
-            if (lives <= 0) {
-                gameActive = false;
-                setTimeout(gameOver, 10);
-                return;
-            } else {
-                isInvincible = true;
-                setTimeout(() => { isInvincible = false; }, 1500);
-            }
-        }
+        // --- แก้ไขในฟังก์ชัน draw ตรงส่วนเช็คชนยาน ---
+if (!isInvincible && 
+    en.x < player.x + player.w && en.x + en.w > player.x &&
+    en.y < player.y + player.h && en.y + en.h > player.y) {
+    
+    enemies.splice(i, 1);
+    lives--;
+    
+    // --- เพิ่มเอฟเฟกต์ที่นี่ ---
+    canvas.style.animation = "shake 0.3s"; // สั่งสั่นทาง CSS
+    player.color = "red"; // เปลี่ยนยานเป็นสีแดง
+    // คืนสีเดิมหลัง 0.15 วินาที
+    setTimeout(() => { player.color = "#00f2fe"; }, 1500); 
+
+    // --- ส่วนที่เหลือคงเดิม ---
+    if (lives <= 0) {
+        gameActive = false;
+        setTimeout(gameOver, 10);
+        return;
+    } else {
+        isInvincible = true;
+        setTimeout(() => { isInvincible = false; }, 1500);
+    }
+}
 
         // เช็คกระสุนโดนศัตรู
         bullets.forEach((b, bi) => {
