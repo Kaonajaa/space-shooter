@@ -14,7 +14,7 @@ let isPaused = false;
 let lives = 3;
 let isInvincible = false;
 let invincibilityTimer = 0;
-let shakeTimer = 0; // ตัวนับเวลาจอสั่น
+let shakeTimer = 0;
 
 // ระบบดวงดาว
 let stars = [];
@@ -57,50 +57,47 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-function triggerShake(duration = 10) {
-    shakeTimer = duration;
-}
+function triggerShake(duration = 10) { shakeTimer = duration; }
 
 function drawUI() {
     const margin = 30; 
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#ff4d4d";
     for (let i = 0; i < lives; i++) {
         let hX = canvas.width - margin - (i * 25);
         let hY = 35;
         ctx.fillStyle = "#ff4d4d";
-        ctx.beginPath();
-        ctx.arc(hX - 4, hY, 4, 0, Math.PI * 2);
-        ctx.arc(hX + 4, hY, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(hX - 8, hY + 1);
-        ctx.lineTo(hX, hY + 10);
-        ctx.lineTo(hX + 8, hY + 1);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(hX - 4, hY, 4, 0, Math.PI * 2); ctx.arc(hX + 4, hY, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(hX - 8, hY + 1); ctx.lineTo(hX, hY + 10); ctx.lineTo(hX + 8, hY + 1); ctx.fill();
     }
+    ctx.shadowBlur = 0;
 }
 
 function draw() {
     if (!gameActive) return;
 
     if (isPaused) {
-        ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+        const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
+        grad.addColorStop(0, "rgba(0, 0, 0, 0.4)");
+        grad.addColorStop(1, "rgba(0, 0, 0, 0.8)");
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "bold 40px Arial";
-        ctx.textAlign = "center";
+
+        ctx.shadowBlur = 20; ctx.shadowColor = "#00f2fe";
+        ctx.fillStyle = "white"; ctx.font = "bold 60px Arial"; ctx.textAlign = "center";
         ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+        ctx.shadowBlur = 0;
         requestAnimationFrame(draw);
         return;
     }
 
-    // --- ระบบจอสั่น ---
     ctx.save();
     if (shakeTimer > 0) {
-        ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+        ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
         shakeTimer--;
     }
 
-    ctx.clearRect(-10, -10, canvas.width + 20, canvas.height + 20);
+    ctx.clearRect(-20, -20, canvas.width + 40, canvas.height + 40);
 
     // วาดดาว
     ctx.fillStyle = "white";
@@ -122,7 +119,9 @@ function draw() {
         if (boss.y < 50) boss.y += 1;
         boss.x += boss.speed * boss.direction;
         if (boss.x <= 0 || boss.x + boss.w >= canvas.width) boss.direction *= -1;
+        ctx.shadowBlur = 15; ctx.shadowColor = "#8e44ad";
         ctx.fillStyle = "#8e44ad"; ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+        ctx.shadowBlur = 0;
         ctx.fillStyle = "red"; ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 8);
         boss.shootTimer++;
         if (boss.shootTimer > 50) {
@@ -133,8 +132,10 @@ function draw() {
 
     // ผู้เล่น
     if (hasShield) {
+        ctx.shadowBlur = 15; ctx.shadowColor = "#00d9ff";
         ctx.strokeStyle = "#00d9ff"; ctx.lineWidth = 3; ctx.beginPath();
         ctx.arc(player.x + player.w/2, player.y + player.h/2, 35, 0, Math.PI*2); ctx.stroke();
+        ctx.shadowBlur = 0;
     }
     if (invincibilityTimer > 0) {
         invincibilityTimer--; isInvincible = true;
@@ -144,19 +145,23 @@ function draw() {
     ctx.fillStyle = player.color; ctx.fillRect(player.x, player.y, player.w, player.h);
     ctx.globalAlpha = 1.0;
 
-    // ไอเทม
+    // ไอเทมเรืองแสง
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.y += 2.5;
+        ctx.save();
+        ctx.shadowBlur = 20; ctx.shadowColor = it.color;
         ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 12, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "white"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center"; ctx.fillText(it.label, it.x, it.y + 4);
+        ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.textAlign = "center"; ctx.fillText(it.label, it.x, it.y + 4);
         if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
             if (it.label === "P") tripleShotTimer = 500;
             if (it.label === "S") hasShield = true;
-            if (it.label === "B") { triggerShake(20); enemies = enemies.filter(e => e.isBossBullet); score += 100; }
+            if (it.label === "B") { triggerShake(25); enemies = enemies.filter(e => e.isBossBullet); score += 100; }
             items.splice(i, 1);
         }
     }
-    if (tripleShotTimer > 0) tripleShotTimer--;
 
     // กระสุน
     bullets.forEach((b, i) => {
@@ -164,7 +169,7 @@ function draw() {
         ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, b.w, b.h);
         if (boss && b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y) {
             boss.hp--; bullets.splice(i, 1);
-            if (boss.hp <= 0) { triggerShake(30); score += 500; boss = null; isBossMode = false; }
+            if (boss.hp <= 0) { triggerShake(35); score += 500; boss = null; isBossMode = false; }
         }
         if (b.y < 0) bullets.splice(i, 1);
     });
@@ -183,10 +188,7 @@ function draw() {
             enemies.splice(i, 1);
             triggerShake(15);
             if (hasShield) { hasShield = false; invincibilityTimer = 60; } 
-            else { 
-                lives--; invincibilityTimer = 120; player.color = "red";
-                setTimeout(() => { player.color = player.baseColor; }, 200);
-            }
+            else { lives--; invincibilityTimer = 120; player.color = "red"; setTimeout(() => player.color = player.baseColor, 200); }
             if (lives <= 0) { gameActive = false; setTimeout(() => { alert("GameOver! Score: " + score); resetGame(); }, 10); return; }
         }
 
