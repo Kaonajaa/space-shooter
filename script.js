@@ -77,16 +77,22 @@ function draw() {
     if (!gameActive) return;
 
     if (isPaused) {
-        const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
-        grad.addColorStop(0, "rgba(0, 0, 0, 0.4)");
-        grad.addColorStop(1, "rgba(0, 0, 0, 0.8)");
-        ctx.fillStyle = "rgba(0, 242, 254, 0.5)";
+        // หน้า Pause สีฟ้าใส (0.05) และแถบดำด้านบนกัน UI กลืน
+        ctx.fillStyle = "rgba(0, 242, 254, 0.05)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const topGrad = ctx.createLinearGradient(0, 0, 0, 100);
+        topGrad.addColorStop(0, "rgba(0, 0, 0, 0.7)");
+        topGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = topGrad;
+        ctx.fillRect(0, 0, canvas.width, 100);
 
+        ctx.save();
         ctx.shadowBlur = 20; ctx.shadowColor = "#00f2fe";
         ctx.fillStyle = "white"; ctx.font = "bold 60px Arial"; ctx.textAlign = "center";
         ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
-        ctx.shadowBlur = 0;
+        ctx.restore();
+        
         requestAnimationFrame(draw);
         return;
     }
@@ -99,7 +105,7 @@ function draw() {
 
     ctx.clearRect(-20, -20, canvas.width + 40, canvas.height + 40);
 
-    // วาดดาว
+    // วาดดวงดาว
     ctx.fillStyle = "white";
     stars.forEach(star => {
         ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
@@ -109,23 +115,31 @@ function draw() {
 
     drawUI();
 
-    // บอส
+    // ระบบบอส (อัปเกรด HP 80 และ Phase 2)
     if (score > 0 && score % 1000 === 0 && !isBossMode && !boss) {
         isBossMode = true;
-        boss = { x: canvas.width/2 - 50, y: -100, w: 100, h: 80, hp: 25, maxHp: 25, speed: 2, direction: 1, shootTimer: 0 };
+        boss = { x: canvas.width/2 - 50, y: -100, w: 100, h: 80, hp: 80, maxHp: 80, speed: 2, direction: 1, shootTimer: 0, isAngry: false };
     }
 
     if (boss) {
         if (boss.y < 50) boss.y += 1;
+        if (boss.hp < boss.maxHp / 2) { boss.isAngry = true; boss.speed = 4; }
         boss.x += boss.speed * boss.direction;
         if (boss.x <= 0 || boss.x + boss.w >= canvas.width) boss.direction *= -1;
-        ctx.shadowBlur = 15; ctx.shadowColor = "#8e44ad";
-        ctx.fillStyle = "#8e44ad"; ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+        
+        ctx.shadowBlur = boss.isAngry ? 30 : 15;
+        ctx.shadowColor = boss.isAngry ? "#ff4500" : "#8e44ad";
+        ctx.fillStyle = boss.isAngry ? "#ff4500" : "#8e44ad";
+        ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
         ctx.shadowBlur = 0;
+        
         ctx.fillStyle = "red"; ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 8);
+        
         boss.shootTimer++;
-        if (boss.shootTimer > 50) {
-            enemies.push({ x: boss.x + boss.w/2 - 10, y: boss.y + boss.h, w: 20, h: 20, speed: 5, isBossBullet: true });
+        let fireRate = boss.isAngry ? 25 : 50;
+        if (boss.shootTimer > fireRate) {
+            enemies.push({ x: boss.x, y: boss.y + boss.h, w: 20, h: 20, speed: 6, isBossBullet: true });
+            enemies.push({ x: boss.x + boss.w - 20, y: boss.y + boss.h, w: 20, h: 20, speed: 6, isBossBullet: true });
             boss.shootTimer = 0;
         }
     }
@@ -145,7 +159,7 @@ function draw() {
     ctx.fillStyle = player.color; ctx.fillRect(player.x, player.y, player.w, player.h);
     ctx.globalAlpha = 1.0;
 
-    // ไอเทมเรืองแสง
+    // ไอเทมเรืองแสง (Drop Rate 15%)
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.y += 2.5;
         ctx.save();
@@ -153,8 +167,8 @@ function draw() {
         ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 12, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
         ctx.restore();
-
         ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.textAlign = "center"; ctx.fillText(it.label, it.x, it.y + 4);
+        
         if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
             if (it.label === "P") tripleShotTimer = 500;
             if (it.label === "S") hasShield = true;
@@ -169,7 +183,7 @@ function draw() {
         ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, b.w, b.h);
         if (boss && b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y) {
             boss.hp--; bullets.splice(i, 1);
-            if (boss.hp <= 0) { triggerShake(35); score += 500; boss = null; isBossMode = false; }
+            if (boss.hp <= 0) { triggerShake(40); score += 500; boss = null; isBossMode = false; }
         }
         if (b.y < 0) bullets.splice(i, 1);
     });
@@ -194,7 +208,8 @@ function draw() {
 
         bullets.forEach((b, bi) => {
             if (!en.isBossBullet && b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
-                if (Math.random() < 0.10) {
+                // DROP RATE 15% ตรงนี้
+                if (Math.random() < 0.15) {
                     let drop = itemData[Math.floor(Math.random() * itemData.length)];
                     items.push({ x: en.x + 20, y: en.y + 20, label: drop.label, color: drop.color });
                 }
