@@ -23,3 +23,18 @@ canvas {
 .score-board { font-size: 22px; color: #00f2fe; font-family: sans-serif; }
 .pause-button { padding: 10px 20px; background: rgba(255,255,255,0.1); border: 1px solid #00f2fe; color: #00f2fe; border-radius: 20px; margin-top: 5px; }
 .countdown-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; color: #00f2fe; z-index: 10; font-family: sans-serif; }
+.score-board {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-family: 'Sarabun', sans-serif; /* ใช้ฟอนต์มาตรฐานไทยที่นายนชอบ */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.high-score {
+    font-size: 14px;
+    color: #ffca28; /* สีทองให้ดูเหมือนรางวัล */
+    margin-top: 5px;
+}
