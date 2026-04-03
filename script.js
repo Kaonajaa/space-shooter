@@ -80,7 +80,7 @@ function draw() {
         const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
         grad.addColorStop(0, "rgba(0, 0, 0, 0.4)");
         grad.addColorStop(1, "rgba(0, 0, 0, 0.8)");
-        ctx.fillStyle = "rgba(0, 242, 254, 0.1)";
+        ctx.fillStyle = "rgba(0, 242, 254, 0.5)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.shadowBlur = 20; ctx.shadowColor = "#00f2fe";
@@ -194,7 +194,7 @@ function draw() {
 
         bullets.forEach((b, bi) => {
             if (!en.isBossBullet && b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
-                if (Math.random() < 0.25) {
+                if (Math.random() < 0.10) {
                     let drop = itemData[Math.floor(Math.random() * itemData.length)];
                     items.push({ x: en.x + 20, y: en.y + 20, label: drop.label, color: drop.color });
                 }
