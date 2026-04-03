@@ -80,7 +80,7 @@ function draw() {
         const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
         grad.addColorStop(0, "rgba(0, 0, 0, 0.4)");
         grad.addColorStop(1, "rgba(0, 0, 0, 0.8)");
-        ctx.fillStyle = grad;
+        ctx.fillStyle = "rgba(0, 242, 254, 0.1)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.shadowBlur = 20; ctx.shadowColor = "#00f2fe";
