@@ -1,4 +1,4 @@
-// --- ส่วนตั้งค่าและตัวแปร ---
+// --- 1. ตั้งค่าตัวแปร (ลบ livesContainer ทิ้งถาวร) ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
@@ -23,31 +23,31 @@ let boss = null;
 let isBossMode = false;
 
 const itemData = [
-    { label: "P", color: "#00ff00" },
-    { label: "S", color: "#00d9ff" },
-    { label: "B", color: "#ff8c00" }
+    { label: "P", color: "#00ff00" }, // Triple Shot
+    { label: "S", color: "#00d9ff" }, // Shield
+    { label: "B", color: "#ff8c00" }  // Bomb
 ];
 
 const player = { x: 0, y: 0, w: 40, h: 40, color: "#00f2fe", baseColor: "#00f2fe" };
 let bullets = [];
 let enemies = [];
 
+// ปรับจอให้เต็มหน้าต่างเบราว์เซอร์
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     player.x = canvas.width / 2 - player.w / 2;
-    player.y = canvas.height - 150;
+    player.y = canvas.height - 120;
 }
 window.addEventListener("resize", resize);
 resize();
 
-// --- วาดหัวใจบน Canvas (มุมขวาบน) ---
+// วาดหัวใจ (HP) ลงบน Canvas ตรงๆ ไม่ผ่าน HTML
 function drawUI() {
     const margin = 30; 
-    const startY = 35;
     for (let i = 0; i < lives; i++) {
         let hX = canvas.width - margin - (i * 25);
-        let hY = startY;
+        let hY = 35;
         ctx.fillStyle = "#ff4d4d";
         ctx.beginPath();
         ctx.arc(hX - 4, hY, 4, 0, Math.PI * 2);
@@ -61,7 +61,7 @@ function drawUI() {
     }
 }
 
-// --- ระบบเกมหลัก ---
+// ฟังก์ชันวาดหลัก
 function draw() {
     if (!gameActive) return;
 
@@ -79,7 +79,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawUI();
 
-    // เช็คบอส
+    // บอสโผล่ทุก 1,000 คะแนน
     if (score > 0 && score % 1000 === 0 && !isBossMode && !boss) {
         isBossMode = true;
         boss = { x: canvas.width / 2 - 50, y: -100, w: 100, h: 80, hp: 20, maxHp: 20, speed: 2, direction: 1, shootTimer: 0 };
@@ -91,8 +91,8 @@ function draw() {
         if (boss.x <= 0 || boss.x + boss.w >= canvas.width) boss.direction *= -1;
         ctx.fillStyle = "#8e44ad";
         ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
-        ctx.fillStyle = "gray"; ctx.fillRect(boss.x, boss.y - 20, boss.w, 10);
-        ctx.fillStyle = "red"; ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 10);
+        ctx.fillStyle = "red";
+        ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 10);
         boss.shootTimer++;
         if (boss.shootTimer > 60) {
             enemies.push({ x: boss.x + boss.w/2 - 10, y: boss.y + boss.h, w: 20, h: 20, speed: 5, isBossBullet: true });
@@ -100,32 +100,35 @@ function draw() {
         }
     }
 
-    // วาดผู้เล่นและเกราะ
+    // วาดเกราะ
     if (hasShield) {
         ctx.strokeStyle = "#00d9ff"; ctx.lineWidth = 3; ctx.beginPath();
         ctx.arc(player.x + player.w/2, player.y + player.h/2, 35, 0, Math.PI*2); ctx.stroke();
     }
+
+    // วาดผู้เล่น
     if (!isInvincible || Math.floor(Date.now() / 100) % 2 === 0) {
-        ctx.fillStyle = player.color; ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
     }
 
-    // ไอเทม
+    // จัดการไอเทม
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.y += 2.5;
-        ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 15, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center"; ctx.fillText(it.label, it.x, it.y + 5);
-        if (it.x + 15 > player.x && it.x - 15 < player.x + player.w && it.y + 15 > player.y && it.y - 15 < player.y + player.h) {
+        ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "white"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center"; ctx.fillText(it.label, it.x, it.y + 4);
+        
+        if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
             if (it.label === "P") tripleShotTimer = 400;
             if (it.label === "S") hasShield = true;
             if (it.label === "B") { enemies = enemies.filter(e => e.isBossBullet); score += 100; }
-            items.splice(i, 1); continue;
+            items.splice(i, 1);
         }
-        if (it.y > canvas.height) items.splice(i, 1);
     }
 
     if (tripleShotTimer > 0) tripleShotTimer--;
 
-    // กระสุน
+    // จัดการกระสุน
     bullets.forEach((b, i) => {
         b.y -= 8; if (b.vx) b.x += b.vx;
         ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -133,12 +136,12 @@ function draw() {
             boss.hp--; bullets.splice(i, 1);
             if (boss.hp <= 0) { score += 500; boss = null; isBossMode = false; }
         }
-        if (b.y < 0 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1);
+        if (b.y < 0) bullets.splice(i, 1);
     });
 
-    // ศัตรู
+    // จัดการศัตรู
     if (!isBossMode && Math.random() < 0.05) {
-        enemies.push({ x: Math.random() * (canvas.width - 40), y: -40, w: 40, h: 40, speed: 3 + (score / 2000) });
+        enemies.push({ x: Math.random() * (canvas.width - 40), y: -40, w: 40, h: 40, speed: 3 + (score/2000) });
     }
 
     enemies.forEach((en, i) => {
@@ -153,7 +156,7 @@ function draw() {
                 lives--; player.color = "red";
                 setTimeout(() => { player.color = player.baseColor; }, 200);
             }
-            if (lives <= 0) { gameActive = false; setTimeout(() => { alert("GameOver! คะแนน: " + score); resetGame(); }, 10); return; } 
+            if (lives <= 0) { gameActive = false; alert("GameOver! คะแนน: " + score); resetGame(); return; } 
             else { isInvincible = true; setTimeout(() => { isInvincible = false; }, 1500); }
         }
 
@@ -173,7 +176,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// --- ฟังก์ชันช่วยเหลือ (ตัด updateLivesUI ทิ้งแล้ว) ---
+// ฟังก์ชันยิง
 function shoot() {
     if (tripleShotTimer > 0) {
         bullets.push({ x: player.x + player.w/2 - 3, y: player.y, w: 6, h: 15, vx: 0 });
@@ -202,6 +205,7 @@ function startCountdown() {
     }, 1000);
 }
 
+// การควบคุม
 setInterval(() => { if (gameActive && !isPaused) shoot(); }, 200);
 window.addEventListener("mousemove", (e) => { player.x = e.clientX - player.w/2; });
 window.addEventListener("touchmove", (e) => { player.x = e.touches[0].clientX - player.w/2; e.preventDefault(); }, {passive: false});
