@@ -6,6 +6,7 @@ const highScoreElement = document.getElementById("highScore");
 const countdownEl = document.getElementById("countdown");
 const pauseBtn = document.getElementById("pauseBtn");
 
+let lives = 3; // เริ่มต้นมี 3 ชีวิต
 let score = 0;
 let highScore = localStorage.getItem("spaceHighScore") || 0;
 if (highScoreElement) highScoreElement.innerText = highScore;
@@ -87,11 +88,21 @@ if (Math.random() < spawnRate) {
         ctx.fillStyle = "#ff0000";
         ctx.fillRect(en.x, en.y, en.w, en.h);
 
-        // เช็คชนยาน
-        if (en.x < player.x + player.w && en.x + en.w > player.x &&
-            en.y < player.y + player.h && en.y + en.h > player.y) {
-            gameOver();
-        }
+        // เช็คศัตรูชนยาน
+if (en.x < player.x + player.w && en.x + en.w > player.x &&
+    en.y < player.y + player.h && en.y + en.h > player.y) {
+    
+    enemies.splice(i, 1); // ลบศัตรูตัวที่ชนออก
+    lives -= 1;           // ลดหัวใจ 1 ดวง
+    
+    // ถ้าหัวใจหมดค่อย Game Over
+    if (lives <= 0) {
+        gameOver();
+    } else {
+        // เอฟเฟกต์กระพริบหรือแจ้งเตือนเบาๆ (ถ้าอยากทำเพิ่ม)
+        console.log("เหลือหัวใจ: " + lives);
+    }
+}
 
         // เช็คกระสุนโดนศัตรู
         bullets.forEach((b, bi) => {
@@ -149,3 +160,23 @@ pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.innerText = isPaused ?
 
 startCountdown();
 draw();
+// ฟังก์ชันวาดรูปหัวใจตามจำนวน lives ที่เหลือ
+function updateLivesUI() {
+    let heartIcons = "";
+    for (let i = 0; i < lives; i++) {
+        heartIcons += "❤️ ";
+    }
+    if (livesContainer) livesContainer.innerText = heartIcons;
+}
+
+// แก้ไขฟังก์ชัน resetGame เดิมให้คืนค่าเลือดด้วย
+function resetGame() {
+    lives = 3;            // คืนเลือดเป็น 3
+    updateLivesUI();      // อัปเดตหน้าจอให้หัวใจกลับมาเต็ม
+    score = 0;
+    scoreElement.innerText = score;
+    enemies = [];
+    bullets = [];
+    resize();
+    startCountdown();
+}
