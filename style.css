@@ -20,24 +20,38 @@ body {
     z-index: 10;
 }
 
-.score-box { font-size: 24px; font-weight: bold; color: #00f2fe; text-shadow: 0 0 10px #00f2fe; }
-.high-score { font-size: 14px; color: #ffd700; margin-top: 5px; }
+/* ทำให้คะแนนอ่านง่ายขึ้นด้วยเงาดำ */
+.score-box { 
+    font-size: 26px; 
+    font-weight: bold; 
+    color: #00f2fe; 
+    text-shadow: 2px 2px 4px #000, 0 0 10px rgba(0, 242, 254, 0.5); 
+}
 
+.high-score { 
+    font-size: 14px; 
+    color: #ffd700; 
+    margin-top: 5px; 
+    text-shadow: 1px 1px 3px #000;
+}
+
+/* ปุ่มหยุดเกมแบบเข้มข้น ไม่กลืนกับพื้นหลัง */
 #pauseBtn {
     position: absolute;
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 10px 25px;
-    background: rgba(0, 242, 254, 0.1);
+    padding: 12px 30px;
+    background: rgba(0, 0, 0, 0.7); /* พื้นหลังเข้มเพื่อให้ตัวหนังสือฟ้าเด่น */
     border: 2px solid #00f2fe;
     color: #00f2fe;
-    border-radius: 20px;
+    border-radius: 25px;
     cursor: pointer;
     font-weight: bold;
-    backdrop-filter: blur(8px); /* ทำให้พื้นหลังหลังปุ่มเบลอ */
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     transition: 0.3s;
-    z-index: 10;
+    z-index: 100;
 }
 
 #pauseBtn:hover {
@@ -55,8 +69,8 @@ body {
     color: #fff;
     font-size: 100px;
     font-weight: bold;
-    background: rgba(0,0,0,0.7);
-    z-index: 20;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
 }
 
 canvas { display: block; }
