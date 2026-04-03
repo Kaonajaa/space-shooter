@@ -20,7 +20,7 @@ body {
     z-index: 10;
 }
 
-.score-box { font-size: 24px; font-weight: bold; color: #00f2fe; }
+.score-box { font-size: 24px; font-weight: bold; color: #00f2fe; text-shadow: 0 0 10px #00f2fe; }
 .high-score { font-size: 14px; color: #ffd700; margin-top: 5px; }
 
 #pauseBtn {
@@ -35,6 +35,7 @@ body {
     border-radius: 20px;
     cursor: pointer;
     font-weight: bold;
+    backdrop-filter: blur(8px); /* ทำให้พื้นหลังหลังปุ่มเบลอ */
     transition: 0.3s;
     z-index: 10;
 }
@@ -42,7 +43,7 @@ body {
 #pauseBtn:hover {
     background: #00f2fe;
     color: #000;
-    box-shadow: 0 0 15px #00f2fe;
+    box-shadow: 0 0 20px #00f2fe;
 }
 
 #countdown {
@@ -54,7 +55,7 @@ body {
     color: #fff;
     font-size: 100px;
     font-weight: bold;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.7);
     z-index: 20;
 }
 
