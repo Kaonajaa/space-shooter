@@ -61,7 +61,7 @@ function draw() {
     // จัดการกระสุน
     bullets.forEach((b, i) => {
         b.y -= 7;
-        ctx.fillStyle = "#ff0055";
+        ctx.fillStyle = "#ffff00";
         ctx.fillRect(b.x, b.y, b.w, b.h);
         if (b.y < 0) bullets.splice(i, 1);
     });
@@ -73,7 +73,7 @@ function draw() {
 
     enemies.forEach((en, i) => {
         en.y += 4;
-        ctx.fillStyle = "#ffac2d";
+        ctx.fillStyle = "#ff0000";
         ctx.fillRect(en.x, en.y, en.w, en.h);
 
         // เช็คชนยาน
