@@ -13,9 +13,10 @@ let gameActive = false;
 let isPaused = false;
 let lives = 3;
 let isInvincible = false;
-let invincibilityTimer = 0; // ตัวนับเวลาอมตะ
+let invincibilityTimer = 0;
+let shakeTimer = 0; // ตัวนับเวลาจอสั่น
 
-// --- [ใหม่] ระบบดวงดาว (Background Stars) ---
+// ระบบดวงดาว
 let stars = [];
 function createStars() {
     stars = [];
@@ -24,12 +25,12 @@ function createStars() {
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             size: Math.random() * 2,
-            speed: Math.random() * 3 + 1
+            speed: Math.random() * 2 + 0.5
         });
     }
 }
 
-// ระบบไอเทม & บอส
+// ไอเทม & บอส
 let items = [];
 let tripleShotTimer = 0;
 let hasShield = false;
@@ -51,10 +52,14 @@ function resize() {
     canvas.height = window.innerHeight;
     player.x = canvas.width / 2 - player.w / 2;
     player.y = canvas.height - 120;
-    createStars(); // สร้างดาวใหม่เมื่อเปลี่ยนขนาดจอ
+    createStars();
 }
 window.addEventListener("resize", resize);
 resize();
+
+function triggerShake(duration = 10) {
+    shakeTimer = duration;
+}
 
 function drawUI() {
     const margin = 30; 
@@ -88,37 +93,37 @@ function draw() {
         return;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // --- ระบบจอสั่น ---
+    ctx.save();
+    if (shakeTimer > 0) {
+        ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+        shakeTimer--;
+    }
 
-    // --- [ใหม่] วาดดวงดาวเลื่อนลงมา ---
+    ctx.clearRect(-10, -10, canvas.width + 20, canvas.height + 20);
+
+    // วาดดาว
     ctx.fillStyle = "white";
     stars.forEach(star => {
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
         star.y += star.speed;
-        if (star.y > canvas.height) {
-            star.y = 0;
-            star.x = Math.random() * canvas.width;
-        }
+        if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
     });
 
     drawUI();
 
-    // ระบบบอส (เหมือนเดิม)
+    // บอส
     if (score > 0 && score % 1000 === 0 && !isBossMode && !boss) {
         isBossMode = true;
-        boss = { x: canvas.width / 2 - 50, y: -100, w: 100, h: 80, hp: 25, maxHp: 25, speed: 2, direction: 1, shootTimer: 0 };
+        boss = { x: canvas.width/2 - 50, y: -100, w: 100, h: 80, hp: 25, maxHp: 25, speed: 2, direction: 1, shootTimer: 0 };
     }
 
     if (boss) {
         if (boss.y < 50) boss.y += 1;
         boss.x += boss.speed * boss.direction;
         if (boss.x <= 0 || boss.x + boss.w >= canvas.width) boss.direction *= -1;
-        ctx.fillStyle = "#8e44ad";
-        ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
-        ctx.fillStyle = "red";
-        ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 8);
+        ctx.fillStyle = "#8e44ad"; ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+        ctx.fillStyle = "red"; ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 8);
         boss.shootTimer++;
         if (boss.shootTimer > 50) {
             enemies.push({ x: boss.x + boss.w/2 - 10, y: boss.y + boss.h, w: 20, h: 20, speed: 5, isBossBullet: true });
@@ -126,29 +131,20 @@ function draw() {
         }
     }
 
-    // วาดเกราะ
+    // ผู้เล่น
     if (hasShield) {
         ctx.strokeStyle = "#00d9ff"; ctx.lineWidth = 3; ctx.beginPath();
         ctx.arc(player.x + player.w/2, player.y + player.h/2, 35, 0, Math.PI*2); ctx.stroke();
     }
-
-    // --- [ใหม่] ระบบยานกระพริบเมื่ออมตะ ---
     if (invincibilityTimer > 0) {
-        invincibilityTimer--;
-        isInvincible = true;
-        if (Math.floor(Date.now() / 100) % 2 === 0) {
-            ctx.globalAlpha = 0.3; // ทำให้ตัวจางลงตอนกระพริบ
-        }
-    } else {
-        isInvincible = false;
-        ctx.globalAlpha = 1.0;
-    }
+        invincibilityTimer--; isInvincible = true;
+        if (Math.floor(Date.now() / 100) % 2 === 0) ctx.globalAlpha = 0.3;
+    } else { isInvincible = false; ctx.globalAlpha = 1.0; }
 
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-    ctx.globalAlpha = 1.0; // คืนค่าความโปร่งใส
+    ctx.fillStyle = player.color; ctx.fillRect(player.x, player.y, player.w, player.h);
+    ctx.globalAlpha = 1.0;
 
-    // จัดการไอเทม
+    // ไอเทม
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.y += 2.5;
         ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 12, 0, Math.PI * 2); ctx.fill();
@@ -156,11 +152,10 @@ function draw() {
         if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
             if (it.label === "P") tripleShotTimer = 500;
             if (it.label === "S") hasShield = true;
-            if (it.label === "B") { enemies = enemies.filter(e => e.isBossBullet); score += 100; }
+            if (it.label === "B") { triggerShake(20); enemies = enemies.filter(e => e.isBossBullet); score += 100; }
             items.splice(i, 1);
         }
     }
-
     if (tripleShotTimer > 0) tripleShotTimer--;
 
     // กระสุน
@@ -169,7 +164,7 @@ function draw() {
         ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, b.w, b.h);
         if (boss && b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y) {
             boss.hp--; bullets.splice(i, 1);
-            if (boss.hp <= 0) { score += 500; boss = null; isBossMode = false; }
+            if (boss.hp <= 0) { triggerShake(30); score += 500; boss = null; isBossMode = false; }
         }
         if (b.y < 0) bullets.splice(i, 1);
     });
@@ -184,16 +179,12 @@ function draw() {
         ctx.fillStyle = en.isBossBullet ? "#ff00ff" : "red";
         ctx.fillRect(en.x, en.y, en.w, en.h);
 
-        // ชนยาน
         if (!isInvincible && en.x < player.x + player.w && en.x + en.w > player.x && en.y < player.y + player.h && en.y + en.h > player.y) {
             enemies.splice(i, 1);
-            if (hasShield) { 
-                hasShield = false; 
-                invincibilityTimer = 60; // อมตะแป๊บนึงหลังเกราะแตก
-            } else { 
-                lives--; 
-                invincibilityTimer = 120; // อมตะ 2 วินาทีหลังโดนชน
-                player.color = "red";
+            triggerShake(15);
+            if (hasShield) { hasShield = false; invincibilityTimer = 60; } 
+            else { 
+                lives--; invincibilityTimer = 120; player.color = "red";
                 setTimeout(() => { player.color = player.baseColor; }, 200);
             }
             if (lives <= 0) { gameActive = false; setTimeout(() => { alert("GameOver! Score: " + score); resetGame(); }, 10); return; }
@@ -201,7 +192,7 @@ function draw() {
 
         bullets.forEach((b, bi) => {
             if (!en.isBossBullet && b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
-                if (Math.random() < 0.2) {
+                if (Math.random() < 0.25) {
                     let drop = itemData[Math.floor(Math.random() * itemData.length)];
                     items.push({ x: en.x + 20, y: en.y + 20, label: drop.label, color: drop.color });
                 }
@@ -212,6 +203,7 @@ function draw() {
         if (en.y > canvas.height) enemies.splice(i, 1);
     });
 
+    ctx.restore();
     requestAnimationFrame(draw);
 }
 
@@ -228,25 +220,21 @@ function shoot() {
 function resetGame() {
     lives = 3; score = 0; items = []; enemies = []; bullets = []; boss = null; isBossMode = false;
     tripleShotTimer = 0; hasShield = false; invincibilityTimer = 0;
-    scoreElement.innerText = score;
-    player.color = player.baseColor;
-    resize();
-    startCountdown();
+    scoreElement.innerText = score; resize(); startCountdown();
 }
 
 function startCountdown() {
     let count = 3; countdownEl.style.display = "flex"; countdownEl.innerText = count;
     const timer = setInterval(() => {
         count--;
-        if (count > 0) { countdownEl.innerText = count; } 
+        if (count > 0) countdownEl.innerText = count;
         else { clearInterval(timer); countdownEl.style.display = "none"; gameActive = true; requestAnimationFrame(draw); }
     }, 1000);
 }
 
-setInterval(() => { if (gameActive && !isPaused) shoot(); }, 180); // ปรับยิงเร็วขึ้นนิดนึง
+setInterval(() => { if (gameActive && !isPaused) shoot(); }, 180);
 window.addEventListener("mousemove", (e) => { player.x = e.clientX - player.w/2; });
 window.addEventListener("touchmove", (e) => { player.x = e.touches[0].clientX - player.w/2; e.preventDefault(); }, {passive: false});
 
 pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม"; };
-
 startCountdown();
