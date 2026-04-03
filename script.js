@@ -1,4 +1,4 @@
-const scoreElement = document.getElementById("score");
+
 const highScoreElement = document.getElementById("highScore"); // เพิ่มอันนี้
 
 let score = 0;
