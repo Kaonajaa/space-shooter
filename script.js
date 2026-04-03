@@ -1,4 +1,4 @@
-// --- 1. ตั้งค่าพื้นฐาน ---
+// --- 1. ตั้งค่าพื้นฐาน (เน้นตัวแปรที่ใช้ใน Canvas) ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
@@ -13,13 +13,13 @@ if (highScoreElement) highScoreElement.innerText = highScore;
 let gameActive = false;
 let isPaused = false;
 let lives = 3;
-let isInvincible = false; // ระบบอมตะชั่วคราวหลังโดนชน
+let isInvincible = false;
 
 const player = { x: 0, y: 0, w: 40, h: 40, color: "#00f2fe" };
 let bullets = [];
 let enemies = [];
 
-// --- 2. ระบบเริ่มเกม/ปรับขนาด ---
+// --- 2. ระบบปรับขนาดจอ ---
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -29,6 +29,27 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
+// --- 3. ฟังก์ชันวาดหัวใจ (วาดลงบน Canvas ตรงๆ) ---
+function drawPlayerLives() {
+    for (let i = 0; i < lives; i++) {
+        let hX = player.x + (i * 15) + (player.w / 2) - (lives * 7.5);
+        let hY = player.y + player.h + 15;
+        
+        ctx.fillStyle = "red";
+        // วาดรูปหัวใจแบบง่าย (วงกลม 2 วง + สามเหลี่ยม)
+        ctx.beginPath();
+        ctx.arc(hX - 3, hY, 3, 0, Math.PI * 2);
+        ctx.arc(hX + 3, hY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(hX - 6, hY + 1);
+        ctx.lineTo(hX, hY + 8);
+        ctx.lineTo(hX + 6, hY + 1);
+        ctx.fill();
+    }
+}
+
+// --- 4. ฟังก์ชันจัดการเกม ---
 function startCountdown() {
     let count = 3;
     countdownEl.style.display = "flex";
@@ -41,48 +62,29 @@ function startCountdown() {
             clearInterval(timer);
             countdownEl.style.display = "none";
             gameActive = true;
+            requestAnimationFrame(draw); // เริ่มวาดหลังจากนับถอยหลังเสร็จ
         }
     }, 1000);
 }
 
-// --- 3. ฟังก์ชันวาดหัวใจใต้ตัวยาน ---
-function drawPlayerLives() {
-    const heartSize = 12;
-    const spacing = 5;
-    const totalWidth = (lives * heartSize) + ((lives - 1) * spacing);
-    let startX = player.x + (player.w / 2) - (totalWidth / 2);
-    let startY = player.y + player.h + 10; // ห่างจากใต้ตัวยาน 10px
-
-    for (let i = 0; i < lives; i++) {
-        ctx.fillStyle = "red";
-        // วาดสี่เหลี่ยมข้าวหลามตัดแทนหัวใจดวงเล็กๆ
-        ctx.save();
-        ctx.translate(startX + (i * (heartSize + spacing)) + heartSize/2, startY + heartSize/2);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillRect(-heartSize/2, -heartSize/2, heartSize, heartSize);
-        ctx.restore();
-    }
-}
-
-// --- 4. Loop หลักของเกม ---
 function draw() {
-    if (!gameActive || isPaused) {
+    if (!gameActive) return; // ถ้าจบเกมให้หยุดวาดทันที ไม่ให้ค้าง
+    if (isPaused) {
         requestAnimationFrame(draw);
         return;
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // วาดผู้เล่น (ถ้าอมตะให้กระพริบ)
+    // วาดผู้เล่น (กระพริบตอนอมตะ)
     if (!isInvincible || Math.floor(Date.now() / 100) % 2 === 0) {
         ctx.fillStyle = player.color;
         ctx.fillRect(player.x, player.y, player.w, player.h);
     }
     
-    // วาดหัวใจใต้ตัวยาน
     drawPlayerLives();
 
-    // จัดการกระสุน
+    // กระสุน
     bullets.forEach((b, i) => {
         b.y -= 7;
         ctx.fillStyle = "yellow";
@@ -90,7 +92,7 @@ function draw() {
         if (b.y < 0) bullets.splice(i, 1);
     });
 
-    // จัดการศัตรู
+    // ศัตรู
     let spawnRate = 0.04 + (score / 10000);
     if (Math.random() < Math.min(spawnRate, 0.1)) {
         enemies.push({ 
@@ -114,9 +116,10 @@ function draw() {
             lives--;
             
             if (lives <= 0) {
-                gameOver();
+                gameActive = false; // หยุดระบบก่อนแจ้งเตือน
+                setTimeout(() => { gameOver(); }, 10); 
+                return;
             } else {
-                // ระบบอมตะชั่วคราว 1.5 วินาที เพื่อไม่ให้เลือดลดรวดเดียว
                 isInvincible = true;
                 setTimeout(() => { isInvincible = false; }, 1500);
             }
@@ -140,11 +143,10 @@ function draw() {
 }
 
 function gameOver() {
-    gameActive = false;
     if (score > highScore) {
         highScore = score;
         localStorage.setItem("spaceHighScore", highScore);
-        highScoreElement.innerText = highScore;
+        if (highScoreElement) highScoreElement.innerText = highScore;
         alert("สถิติใหม่! " + highScore);
     } else {
         alert("Game Over! คะแนน: " + score);
@@ -163,13 +165,11 @@ function resetGame() {
     startCountdown();
 }
 
-// ยิงอัตโนมัติ
+// ระบบยิงและควบคุม (เหมือนเดิม)
 setInterval(() => { if (gameActive && !isPaused) shoot(); }, 200);
 function shoot() {
     bullets.push({ x: player.x + player.w/2 - 3, y: player.y, w: 6, h: 15 });
 }
-
-// ควบคุม
 window.addEventListener("mousemove", (e) => { player.x = e.clientX - player.w/2; });
 window.addEventListener("touchmove", (e) => { 
     player.x = e.touches[0].clientX - player.w/2; 
@@ -179,4 +179,3 @@ window.addEventListener("touchmove", (e) => {
 pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม"; };
 
 startCountdown();
-draw();
