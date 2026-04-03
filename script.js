@@ -1,4 +1,4 @@
-// --- 1. ตัวแปรพื้นฐาน ---
+// --- 1. ตั้งค่าพื้นฐาน ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
@@ -33,22 +33,25 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-// --- 2. ฟังก์ชันวาดหัวใจ (วิธีใหม่: วงกลม 2 วง + สามเหลี่ยม) ---
-// วิธีนี้รับรองว่าสมมาตร 100% ไม่เบี้ยวแน่นอน
-function drawPlayerLives() {
+// --- ฟังก์ชันวาด UI (หัวใจมุมบนขวา) ---
+function drawUI() {
+    // กำหนดให้ห่างจากขอบขวาเข้ามา
+    const margin = 30; 
+    const startY = 35; // ความสูงระดับเดียวกับตัวอักษรคะแนน
+    
     for (let i = 0; i < lives; i++) {
-        let hX = player.x + (i * 20) + (player.w / 2) - (lives * 10);
-        let hY = player.y + player.h + 15;
+        // คำนวณตำแหน่งจากขวามาซ้าย: เอาความกว้างจอ ลบด้วยระยะห่าง
+        let hX = canvas.width - margin - (i * 25);
+        let hY = startY;
         
-        ctx.fillStyle = "#ff4d4d";
+        ctx.fillStyle = "#ff4d4d"; // สีแดงสด
         
-        // วาดวงกลมซ้าย-ขวา
+        // วาดหัวใจ (วงกลม 2 วง + สามเหลี่ยม) สมมาตรแน่นอน 100%
         ctx.beginPath();
         ctx.arc(hX - 4, hY, 4, 0, Math.PI * 2);
         ctx.arc(hX + 4, hY, 4, 0, Math.PI * 2);
         ctx.fill();
         
-        // วาดสามเหลี่ยมด้านล่างเชื่อมกัน
         ctx.beginPath();
         ctx.moveTo(hX - 8, hY + 1);
         ctx.lineTo(hX, hY + 10);
@@ -57,11 +60,10 @@ function drawPlayerLives() {
     }
 }
 
-// --- 3. ระบบจอสั่น (แก้ไขให้สั่นทุกครั้ง) ---
+// --- 3. ระบบจอสั่น (Reset Animation ทุกครั้ง) ---
 function triggerScreenShake() {
-    // ลบคลาสเก่าออกก่อน (เผื่อมันค้างอยู่) แล้วค่อยใส่ใหม่ในเสี้ยววิถัดไป
     canvas.classList.remove("shake");
-    void canvas.offsetWidth; // บรรทัดนี้สำคัญ! เป็นการสั่งให้ Browser Reset Animation
+    void canvas.offsetWidth; // บังคับให้ Browser รีเฟรช Class
     canvas.classList.add("shake");
 }
 
@@ -91,13 +93,16 @@ function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // วาดหัวใจและ UI ก่อน
+    drawUI();
+
+    // วาดผู้เล่น (กระพริบตอนอมตะ)
     if (!isInvincible || Math.floor(Date.now() / 100) % 2 === 0) {
         ctx.fillStyle = player.color;
         ctx.fillRect(player.x, player.y, player.w, player.h);
     }
-    
-    drawPlayerLives();
 
+    // จัดการกระสุน
     bullets.forEach((b, i) => {
         b.y -= 8;
         ctx.fillStyle = "yellow";
@@ -105,6 +110,7 @@ function draw() {
         if (b.y < 0) bullets.splice(i, 1);
     });
 
+    // จัดการศัตรู
     let spawnRate = 0.04 + (score / 10000);
     if (Math.random() < Math.min(spawnRate, 0.12)) {
         enemies.push({ 
@@ -119,6 +125,7 @@ function draw() {
         ctx.fillStyle = "red";
         ctx.fillRect(en.x, en.y, en.w, en.h);
 
+        // เช็คชนยาน
         if (!isInvincible && 
             en.x < player.x + player.w && en.x + en.w > player.x &&
             en.y < player.y + player.h && en.y + en.h > player.y) {
@@ -140,6 +147,7 @@ function draw() {
             }
         }
 
+        // เช็คกระสุนโดนศัตรู
         bullets.forEach((b, bi) => {
             if (b.x < en.x + en.w && b.x + b.w > en.x &&
                 b.y < en.y + en.h && b.y + b.h > en.y) {
@@ -163,7 +171,7 @@ function gameOver() {
         if (highScoreElement) highScoreElement.innerText = highScore;
         alert("สถิติใหม่! " + highScore);
     } else {
-        alert("GameOver! คะแนน: " + score);
+        alert("Game Over! คะแนน: " + score);
     }
     resetGame();
 }
