@@ -121,72 +121,20 @@ function draw() {
         }
     }
     
-    if (isPaused) {
-    // ✓ ใส่ Background blur ลึกขึ้น
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
+   if (isPaused) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // ✓ เพิ่ม Gradient กรอบขอบ ให้ดูเป็นกล่อง
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const boxWidth = 500;
-    const boxHeight = 300;
-    
-    // สร้าง Gradient Border
-    const borderGrad = ctx.createLinearGradient(
-        centerX - boxWidth/2, centerY - boxHeight/2,
-        centerX + boxWidth/2, centerY + boxHeight/2
-    );
-    borderGrad.addColorStop(0, "#00f2fe");
-    borderGrad.addColorStop(0.5, "#8e44ad");
-    borderGrad.addColorStop(1, "#00f2fe");
-    
-    // วาดกรอบ
-    ctx.strokeStyle = borderGrad;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(
-        centerX - boxWidth/2, 
-        centerY - boxHeight/2, 
-        boxWidth, 
-        boxHeight, 
-        15
-    );
-    ctx.stroke();
-
-    // วาดพื้นหลัง Semi-transparent
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.beginPath();
-    ctx.roundRect(
-        centerX - boxWidth/2, 
-        centerY - boxHeight/2, 
-        boxWidth, 
-        boxHeight, 
-        15
-    );
-    ctx.fill();
-
-    // ✓ วาด Text "PAUSED" พร้อม Glow
-    ctx.save();
-    ctx.shadowBlur = 25; 
-    ctx.shadowColor = "#00f2fe";
-    ctx.fillStyle = "#00f2fe"; 
-    ctx.font = "bold 70px Arial"; 
+    ctx.fillStyle = "#00f2fe";
+    ctx.font = "bold 34px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("⏸ PAUSED", centerX, centerY - 40);
+    ctx.fillText("⏸ PAUSED", canvas.width / 2, canvas.height / 2 - 20);
     
-    // ✓ เพิ่มข้อความ "Press P to Resume"
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; 
-    ctx.font = "16px Arial"; 
-    ctx.fillText("Press P to Resume | SPACEBAR to Fire", centerX, centerY + 50);
-    
-    ctx.restore();
-    
-    requestAnimationFrame(draw);
-    return;
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial";
+    ctx.fillText("กดปุ่ม P หรือปุ่มบนจอเพื่อเล่นต่อ", canvas.width / 2, canvas.height / 2 + 20);
+    return; 
 }
-
     ctx.save();
     if (shakeTimer > 0) {
         ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
@@ -582,10 +530,13 @@ canvas.addEventListener("click", () => {
     }
 });
 window.addEventListener("keydown", (e) => {
-    // ✓ เมื่อกด P (ตัวพิมพ์ใหญ่ หรือเล็ก)
     if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
         isPaused = !isPaused;
-        pauseBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม";
+        
+        const pBtn = document.getElementById("pauseBtn");
+        if (pBtn) {
+            pBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม";
+        }
     }
 });
