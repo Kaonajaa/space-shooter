@@ -6,7 +6,7 @@ const countdownEl = document.getElementById("countdown");
 const pauseBtn = document.getElementById("pauseBtn");
 
 let score = 0;
-let highScore = localStorage.getItem("spaceHighScore") || 0;
+let highScore = parseInt(localStorage.getItem("spaceHighScore")) || 0;
 if (highScoreElement) highScoreElement.innerText = highScore;
 
 // [แก้ไข 1] ตัวแปรเพิ่มเติมสำหรับ Manual Fire System
@@ -410,9 +410,31 @@ function drawBoss(boss) {
 }
 
 function resetGame() {
-    lives = 3; score = 0; items = []; enemies = []; bullets = []; boss = null; isBossMode = false;
+    updateHighScore();
+    lives = 3;
+    score = 0;
+    items = [];
+    enemies = [];
+    bullets = [];
+    boss = null;
+    isBossMode = false;
     tripleShotTimer = 0; hasShield = false; invincibilityTimer = 0;
     scoreElement.innerText = score; resize(); startCountdown();
+}
+// ฟังก์ชันสำหรับเช็กและบันทึกคะแนนสูงสุดใหม่
+function updateHighScore() {
+    // ถ้าคะแนนรอบปัจจุบัน (score) มากกว่า คะแนนสูงสุดที่เคยทำได้ (highScore)
+    if (score > highScore) {
+        highScore = score; // อัปเดตตัวแปรคะแนนสูงสุดในเกม
+        
+        // บันทึกตัวเลขลงความจำของเบราว์เซอร์ (localStorage) ปิดเว็บเปิดใหม่ก็ไม่หาย
+        localStorage.setItem("spaceHighScore", highScore);
+        
+        // เปลี่ยนตัวเลขที่แสดงบนหน้าจอผู้เล่นให้เป็นคะแนนใหม่
+        if (highScoreElement) highScoreElement.innerText = highScore;
+        
+        console.log("🏆 New High Score: " + highScore);
+    }
 }
 
 function startCountdown() {
