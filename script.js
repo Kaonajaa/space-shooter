@@ -13,6 +13,27 @@ if (highScoreElement) highScoreElement.innerText = highScore;
 let lastFireTime = 0;           // เก็บเวลาการยิงครั้งล่าสุด
 const FIRE_COOLDOWN = 150;      // หน่วงเวลากว่าง 150 มิลลิวินาที (ปรับได้ 150-200)
 
+// ✓ Object สำหรับเก็บ Sprite Images
+const sprites = {
+    player: null,
+    enemy: null,
+    boss: null,
+    bullet: null,
+    items: {}
+};
+
+// ✓ ฟังก์ชันโหลด Sprites จาก URL
+function loadSprites() {
+    // สามารถใช้ URL ภายนอกหรือ Base64 DataURL
+    // Example: sprites.player = new Image();
+    // sprites.player.src = "https://example.com/player.png";
+    
+    console.log("🎨 Sprites system loaded (Ready for image imports)");
+}
+
+// เรียก loadSprites() ที่เริ่มต้นเกม
+loadSprites();
+
 let gameActive = false;
 let isPaused = false;
 let lives = 3;
@@ -136,13 +157,7 @@ function draw() {
         if (boss.hp < boss.maxHp / 2) { boss.isAngry = true; boss.speed = 4; }
         boss.x += boss.speed * boss.direction;
         if (boss.x <= 0 || boss.x + boss.w >= canvas.width) boss.direction *= -1;
-        
-        ctx.shadowBlur = boss.isAngry ? 30 : 15;
-        ctx.shadowColor = boss.isAngry ? "#ff4500" : "#8e44ad";
-        ctx.fillStyle = boss.isAngry ? "#ff4500" : "#8e44ad";
-        ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
-        ctx.shadowBlur = 0;
-        
+        drawBoss(boss);
         ctx.fillStyle = "red"; ctx.fillRect(boss.x, boss.y - 20, (boss.hp / boss.maxHp) * boss.w, 8);
         
         boss.shootTimer++;
@@ -166,18 +181,13 @@ function draw() {
         if (Math.floor(Date.now() / 100) % 2 === 0) ctx.globalAlpha = 0.3;
     } else { isInvincible = false; ctx.globalAlpha = 1.0; }
 
-    ctx.fillStyle = player.color; ctx.fillRect(player.x, player.y, player.w, player.h);
+    drawPlayer();
     ctx.globalAlpha = 1.0;
 
     // ไอเทมเรืองแสง (Drop Rate 15%)
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.y += 2.5;
-        ctx.save();
-        ctx.shadowBlur = 20; ctx.shadowColor = it.color;
-        ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 12, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
-        ctx.restore();
-        ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.textAlign = "center"; ctx.fillText(it.label, it.x, it.y + 4);
+        drawItem(it);
         
         if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
             if (it.label === "P") tripleShotTimer = 500;
@@ -190,7 +200,7 @@ function draw() {
     // กระสุน
     bullets.forEach((b, i) => {
         b.y -= 10; if (b.vx) b.x += b.vx;
-        ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, b.w, b.h);
+        drawBullet(b);
         if (boss && b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y) {
             boss.hp--; bullets.splice(i, 1);
             if (boss.hp <= 0) { triggerShake(40); score += 500; boss = null; isBossMode = false; }
@@ -205,9 +215,7 @@ function draw() {
 
     enemies.forEach((en, i) => {
         en.y += en.speed;
-        ctx.fillStyle = en.isBossBullet ? "#ff00ff" : "red";
-        ctx.fillRect(en.x, en.y, en.w, en.h);
-
+        drawEnemy(en);
         if (!isInvincible && en.x < player.x + player.w && en.x + en.w > player.x && en.y < player.y + player.h && en.y + en.h > player.y) {
             enemies.splice(i, 1);
             triggerShake(15);
@@ -241,6 +249,163 @@ function shoot() {
         bullets.push({ x: player.x + player.w, y: player.y, w: 6, h: 15, vx: 3 });
     } else {
         bullets.push({ x: player.x + player.w/2 - 3, y: player.y, w: 6, h: 15, vx: 0 });
+    }
+}
+// [แก้ไข 2] ฟังก์ชันวาดผู้เล่นแบบ 3D/Gradient
+function drawPlayer() {
+    // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
+    if (sprites.player && sprites.player.complete) {
+        ctx.drawImage(sprites.player, player.x, player.y, player.w, player.h);
+    } else {
+        // ✓ วาดยานแบบ 3D Gradient (ถ้ายังไม่มีรูป)
+        const shipGrad = ctx.createLinearGradient(
+            player.x, player.y,
+            player.x, player.y + player.h
+        );
+        shipGrad.addColorStop(0, "#00ffff");
+        shipGrad.addColorStop(0.5, player.color);
+        shipGrad.addColorStop(1, "#004d7f");
+        
+        ctx.fillStyle = shipGrad;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        
+        // ✓ เพิ่มขอบวง Highlight
+        ctx.strokeStyle = "#00ffff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(player.x, player.y, player.w, player.h);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+
+// [แก้ไข 3] ฟังก์ชันวาดศัตรูแบบ 3D/Gradient
+function drawEnemy(en) {
+    // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
+    if (sprites.enemy && sprites.enemy.complete) {
+        ctx.drawImage(sprites.enemy, en.x, en.y, en.w, en.h);
+    } else {
+        let enemyGrad;
+        
+        // ✓ กระสุนบอสมีสีต่างกัน
+        if (en.isBossBullet) {
+            enemyGrad = ctx.createLinearGradient(en.x, en.y, en.x, en.y + en.h);
+            enemyGrad.addColorStop(0, "#ff00ff");
+            enemyGrad.addColorStop(1, "#8b008b");
+            ctx.fillStyle = enemyGrad;
+        } else {
+            enemyGrad = ctx.createLinearGradient(en.x, en.y, en.x, en.y + en.h);
+            enemyGrad.addColorStop(0, "#ff3333");
+            enemyGrad.addColorStop(1, "#8b0000");
+            ctx.fillStyle = enemyGrad;
+        }
+        
+        ctx.fillRect(en.x, en.y, en.w, en.h);
+        
+        // ✓ เพิ่มขอบวง Highlight สีตรงข้าม
+        ctx.strokeStyle = en.isBossBullet ? "#ff77ff" : "#ff9999";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(en.x, en.y, en.w, en.h);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+
+// [แก้ไข 4] ฟังก์ชันวาดกระสุนแบบ Gradient
+function drawBullet(b) {
+    // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
+    if (sprites.bullet && sprites.bullet.complete) {
+        ctx.drawImage(sprites.bullet, b.x, b.y, b.w, b.h);
+    } else {
+        const bulletGrad = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+        bulletGrad.addColorStop(0, "#ffff99");
+        bulletGrad.addColorStop(1, "#ffaa00");
+        
+        ctx.fillStyle = bulletGrad;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        
+        // ✓ เพิ่ม Glow Effect
+        ctx.shadowColor = "#ffaa00";
+        ctx.shadowBlur = 8;
+        ctx.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2);
+        ctx.shadowBlur = 0;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+
+// [แก้ไข 5] ฟังก์ชันวาดไอเทมแบบ 3D/Glow
+function drawItem(it) {
+    // ✓ ถ้ามี Sprite สำหรับไอเทม ให้ใช้รูป
+    if (sprites.items[it.label] && sprites.items[it.label].complete) {
+        ctx.drawImage(sprites.items[it.label], it.x - 12, it.y - 12, 24, 24);
+    } else {
+        ctx.save();
+        
+        // ✓ วาดไอเทมแบบ 3D Sphere Effect
+        const itemGrad = ctx.createRadialGradient(
+            it.x - 5, it.y - 5, 0,
+            it.x, it.y, 12
+        );
+        itemGrad.addColorStop(0, it.color);
+        itemGrad.addColorStop(0.7, it.color);
+        itemGrad.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+        
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = it.color;
+        ctx.fillStyle = itemGrad;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // ✓ เพิ่มขอบสีขาว
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // ✓ วาดตัวหนังสือ Label
+        ctx.fillStyle = "white";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(it.label, it.x, it.y);
+        
+        ctx.restore();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+
+// [แก้ไข 6] ฟังก์ชันวาดบอสแบบ 3D/Gradient
+function drawBoss(boss) {
+    if (sprites.boss && sprites.boss.complete) {
+        ctx.drawImage(sprites.boss, boss.x, boss.y, boss.w, boss.h);
+    } else {
+        // ✓ วาดบอสแบบ Gradient
+        const bossGrad = ctx.createLinearGradient(
+            boss.x, boss.y,
+            boss.x, boss.y + boss.h
+        );
+        
+        if (boss.isAngry) {
+            bossGrad.addColorStop(0, "#ff6633");
+            bossGrad.addColorStop(1, "#990000");
+            ctx.shadowColor = "#ff4500";
+        } else {
+            bossGrad.addColorStop(0, "#aa44dd");
+            bossGrad.addColorStop(1, "#4a0080");
+            ctx.shadowColor = "#8e44ad";
+        }
+        
+        ctx.shadowBlur = boss.isAngry ? 30 : 15;
+        ctx.fillStyle = bossGrad;
+        ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+        
+        // ✓ เพิ่มขอบ Highlight
+        ctx.strokeStyle = boss.isAngry ? "#ffaa33" : "#dd88ff";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(boss.x, boss.y, boss.w, boss.h);
+        
+        ctx.shadowBlur = 0;
     }
 }
 
