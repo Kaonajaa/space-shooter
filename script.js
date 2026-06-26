@@ -59,6 +59,11 @@ function createStars() {
 let items = [];
 let tripleShotTimer = 0;
 let hasShield = false;
+
+let shieldTimer = 0;
+const SHIELD_DURATION = 300;  // โล่อยู่ 5 วินาที (300 frames @ 60fps)
+const SHIELD_ACTIVATION_COOLDOWN = 100;  // หน่วงเวลาหลังเก็บไอเทมโล่
+
 let boss = null;
 let isBossMode = false;
 
@@ -107,6 +112,15 @@ function draw() {
     }
 }
 
+ if (shieldTimer > 0) {
+        shieldTimer--;
+        // ✓ เมื่อหมดเวลา ให้เอาโล่ออก
+        if (shieldTimer <= 0) {
+            hasShield = false;
+            console.log("💔 Shield Expired!");
+        }
+    }
+    
     if (isPaused) {
     // ✓ ใส่ Background blur ลึกขึ้น
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
@@ -190,6 +204,7 @@ function draw() {
     });
 
     drawUI();
+    drawShieldInfo();
 
     // ระบบบอส (อัปเกรด HP 80 และ Phase 2)
     if (score > 0 && score % 1000 === 0 && !isBossMode && !boss) {
@@ -235,8 +250,12 @@ function draw() {
         drawItem(it);
         
         if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
-            if (it.label === "P") tripleShotTimer = 500;
-            if (it.label === "S") hasShield = true;
+            if (it.label === "P") {tripleShotTimer = 500;
+                console.log("🔸 Triple Shot Activated!")
+            if (it.label === "S") {hasShield = true;
+                // ✓ ตั้งเวลาโล่ 5 วินาที 
+                shieldTimer = SHIELD_DURATION;
+                console.log("🛡️ Shield Activated for 5 seconds!")
             if (it.label === "B") { triggerShake(25); enemies = enemies.filter(e => e.isBossBullet); score += 100; }
             items.splice(i, 1);
         }
@@ -262,12 +281,33 @@ function draw() {
         en.y += en.speed;
         drawEnemy(en);
         if (!isInvincible && en.x < player.x + player.w && en.x + en.w > player.x && en.y < player.y + player.h && en.y + en.h > player.y) {
-            enemies.splice(i, 1);
-            triggerShake(15);
-            if (hasShield) { hasShield = false; invincibilityTimer = 60; } 
-            else { lives--; invincibilityTimer = 120; player.color = "red"; setTimeout(() => player.color = player.baseColor, 200); }
-            if (lives <= 0) { gameActive = false; setTimeout(() => { alert("GameOver! Score: " + score); resetGame(); }, 10); return; }
-        }
+    enemies.splice(i, 1);
+    triggerShake(15);
+             if (hasShield) {
+        hasShield = false;      // ทำลายโล่
+        shieldTimer = 0;        // รีเซ็ตเวลา
+        invincibilityTimer = 60; // ให้ยานมีเวลาหลบ
+        console.log("💥 Shield Broken!");
+    } 
+    // ✓ ถ้าไม่มีโล่ ให้เสียชีวิต
+    else {
+        lives--;
+        invincibilityTimer = 120;
+        player.color = "red";
+        setTimeout(() => player.color = player.baseColor, 200);
+        console.log("❌ Hit! Lives: " + lives);
+    }
+    
+    if (lives <= 0) {
+        gameActive = false;
+        updateHighScore();  // ✓ อัพเดต High Score ก่อนจบเกม
+        setTimeout(() => {
+            alert("GameOver! Score: " + score + "\nHigh Score: " + highScore);
+            resetGame();
+        }, 10);
+        return;
+    }
+}
 
         bullets.forEach((b, bi) => {
             if (!en.isBossBullet && b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
@@ -296,6 +336,22 @@ function shoot() {
         bullets.push({ x: player.x + player.w/2 - 3, y: player.y, w: 6, h: 15, vx: 0 });
     }
 }
+
+        function drawShieldInfo() {
+    if (hasShield) {
+        const shieldPercent = Math.round((shieldTimer / SHIELD_DURATION) * 100);
+        
+        ctx.save();
+        ctx.fillStyle = "#00d9ff";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "left";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#00d9ff";
+        ctx.fillText(`🛡️ Shield: ${shieldPercent}%`, 30, 100);
+        ctx.restore();
+    }
+}
+        
 // [แก้ไข 2] ฟังก์ชันวาดผู้เล่นแบบ 3D/Gradient
 function drawPlayer() {
     // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
