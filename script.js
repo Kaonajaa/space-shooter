@@ -9,11 +9,11 @@ let score = 0;
 let highScore = parseInt(localStorage.getItem("spaceHighScore")) || 0;
 if (highScoreElement) highScoreElement.innerText = highScore;
 
-// [แก้ไข 1] ตัวแปรเพิ่มเติมสำหรับ Manual Fire System
-let lastFireTime = 0;           // เก็บเวลาการยิงครั้งล่าสุด
-const FIRE_COOLDOWN = 150;      // หน่วงเวลากว่าง 150 มิลลิวินาที (ปรับได้ 150-200)
+// ระบบ Manual Fire System
+let lastFireTime = 0;           
+const FIRE_COOLDOWN = 150;      
 
-// ✓ Object สำหรับเก็บ Sprite Images
+// Object สำหรับเก็บ Sprite Images
 const sprites = {
     player: null,
     enemy: null,
@@ -22,12 +22,8 @@ const sprites = {
     items: {}
 };
 
-// ✓ ฟังก์ชันโหลด Sprites จาก URL
+// ฟังก์ชันโหลด Sprites จาก URL
 function loadSprites() {
-    // สามารถใช้ URL ภายนอกหรือ Base64 DataURL
-    // Example: sprites.player = new Image();
-    // sprites.player.src = "https://example.com/player.png";
-    
     console.log("🎨 Sprites system loaded (Ready for image imports)");
 }
 
@@ -61,8 +57,8 @@ let tripleShotTimer = 0;
 let hasShield = false;
 
 let shieldTimer = 0;
-const SHIELD_DURATION = 300;  // โล่อยู่ 5 วินาที (300 frames @ 60fps)
-const SHIELD_ACTIVATION_COOLDOWN = 100;  // หน่วงเวลาหลังเก็บไอเทมโล่
+const SHIELD_DURATION = 300;  // โล่อยู่ 5 วินาที
+const SHIELD_ACTIVATION_COOLDOWN = 100;  
 
 let boss = null;
 let isBossMode = false;
@@ -106,35 +102,36 @@ function drawUI() {
 function draw() {
     if (!gameActive) return;
 
+    // ระบบลดเวลาไอเทม (จะทำงานต่อเมื่อเกมไม่ได้หยุด)
     if (gameActive && !isPaused) {
-    if (tripleShotTimer > 0) {
-        tripleShotTimer--;
-    }
-}
-
- if (shieldTimer > 0) {
-        shieldTimer--;
-        // ✓ เมื่อหมดเวลา ให้เอาโล่ออก
-        if (shieldTimer <= 0) {
-            hasShield = false;
-            console.log("💔 Shield Expired!");
+        if (tripleShotTimer > 0) {
+            tripleShotTimer--;
+        }
+        if (shieldTimer > 0) {
+            shieldTimer--;
+            if (shieldTimer <= 0) {
+                hasShield = false;
+                console.log("💔 Shield Expired!");
+            }
         }
     }
     
-   if (isPaused) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = "#00f2fe";
-    ctx.font = "bold 34px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("⏸ PAUSED", canvas.width / 2, canvas.height / 2 - 20);
-    
-    ctx.fillStyle = "white";
-    ctx.font = "16px Arial";
-    ctx.fillText("กดปุ่ม P หรือปุ่มบนจอเพื่อเล่นต่อ", canvas.width / 2, canvas.height / 2 + 20);
-    return; 
-}
+    // จังหวะหยุดเกม (Pause Screen บน Canvas)
+    if (isPaused) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "#00f2fe";
+        ctx.font = "bold 34px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("⏸ PAUSED", canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "16px Arial";
+        ctx.fillText("กดปุ่ม P หรือปุ่มบนจอเพื่อเล่นต่อ", canvas.width / 2, canvas.height / 2 + 20);
+        return; // สั่งหยุดทำงานในส่วนวาดด้านล่าง
+    }
+
     ctx.save();
     if (shakeTimer > 0) {
         ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
@@ -154,7 +151,7 @@ function draw() {
     drawUI();
     drawShieldInfo();
 
-    // ระบบบอส (อัปเกรด HP 80 และ Phase 2)
+    // ระบบบอส
     if (score > 0 && score % 1000 === 0 && !isBossMode && !boss) {
         isBossMode = true;
         boss = { x: canvas.width/2 - 50, y: -100, w: 100, h: 80, hp: 80, maxHp: 80, speed: 2, direction: 1, shootTimer: 0, isAngry: false };
@@ -192,19 +189,24 @@ function draw() {
     drawPlayer();
     ctx.globalAlpha = 1.0;
 
-    // ไอเทมเรืองแสง (Drop Rate 15%)
+    // ไอเทมเรืองแสง
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.y += 2.5;
         drawItem(it);
         
         if (it.x + 12 > player.x && it.x - 12 < player.x + player.w && it.y + 12 > player.y && it.y - 12 < player.y + player.h) {
-            if (it.label === "P") {tripleShotTimer = 500;
-                console.log("🔸 Triple Shot Activated!")
-            if (it.label === "S") {hasShield = true;
-                // ✓ ตั้งเวลาโล่ 5 วินาที 
+            if (it.label === "P") {
+                tripleShotTimer = 500;
+                console.log("🔸 Triple Shot Activated!");
+            } else if (it.label === "S") {
+                hasShield = true;
                 shieldTimer = SHIELD_DURATION;
-                console.log("🛡️ Shield Activated for 5 seconds!")
-            if (it.label === "B") { triggerShake(25); enemies = enemies.filter(e => e.isBossBullet); score += 100; }
+                console.log("🛡️ Shield Activated for 5 seconds!");
+            } else if (it.label === "B") { 
+                triggerShake(25); 
+                enemies = enemies.filter(e => e.isBossBullet); 
+                score += 100; 
+            }
             items.splice(i, 1);
         }
     }
@@ -228,38 +230,39 @@ function draw() {
     enemies.forEach((en, i) => {
         en.y += en.speed;
         drawEnemy(en);
+        
+        // เช็กยานชนศัตรู
         if (!isInvincible && en.x < player.x + player.w && en.x + en.w > player.x && en.y < player.y + player.h && en.y + en.h > player.y) {
-    enemies.splice(i, 1);
-    triggerShake(15);
-             if (hasShield) {
-        hasShield = false;      // ทำลายโล่
-        shieldTimer = 0;        // รีเซ็ตเวลา
-        invincibilityTimer = 60; // ให้ยานมีเวลาหลบ
-        console.log("💥 Shield Broken!");
-    } 
-    // ✓ ถ้าไม่มีโล่ ให้เสียชีวิต
-    else {
-        lives--;
-        invincibilityTimer = 120;
-        player.color = "red";
-        setTimeout(() => player.color = player.baseColor, 200);
-        console.log("❌ Hit! Lives: " + lives);
-    }
-    
-    if (lives <= 0) {
-        gameActive = false;
-        updateHighScore();  // ✓ อัพเดต High Score ก่อนจบเกม
-        setTimeout(() => {
-            alert("GameOver! Score: " + score + "\nHigh Score: " + highScore);
-            resetGame();
-        }, 10);
-        return;
-    }
-}
+            enemies.splice(i, 1);
+            triggerShake(15);
+            
+            if (hasShield) {
+                hasShield = false;      
+                shieldTimer = 0;        
+                invincibilityTimer = 60; 
+                console.log("💥 Shield Broken!");
+            } else {
+                lives--;
+                invincibilityTimer = 120;
+                player.color = "red";
+                setTimeout(() => player.color = player.baseColor, 200);
+                console.log("❌ Hit! Lives: " + lives);
+            }
+            
+            if (lives <= 0) {
+                gameActive = false;
+                updateHighScore();  
+                setTimeout(() => {
+                    alert("GameOver! Score: " + score + "\nHigh Score: " + highScore);
+                    resetGame();
+                }, 10);
+                return;
+            }
+        }
 
+        // เช็กกระสุนชนศัตรู
         bullets.forEach((b, bi) => {
             if (!en.isBossBullet && b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
-                // DROP RATE 15% ตรงนี้
                 if (Math.random() < 0.15) {
                     let drop = itemData[Math.floor(Math.random() * itemData.length)];
                     items.push({ x: en.x + 20, y: en.y + 20, label: drop.label, color: drop.color });
@@ -285,10 +288,9 @@ function shoot() {
     }
 }
 
-        function drawShieldInfo() {
+function drawShieldInfo() {
     if (hasShield) {
         const shieldPercent = Math.round((shieldTimer / SHIELD_DURATION) * 100);
-        
         ctx.save();
         ctx.fillStyle = "#00d9ff";
         ctx.font = "14px Arial";
@@ -300,42 +302,27 @@ function shoot() {
     }
 }
         
-// [แก้ไข 2] ฟังก์ชันวาดผู้เล่นแบบ 3D/Gradient
 function drawPlayer() {
-    // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
     if (sprites.player && sprites.player.complete) {
         ctx.drawImage(sprites.player, player.x, player.y, player.w, player.h);
     } else {
-        // ✓ วาดยานแบบ 3D Gradient (ถ้ายังไม่มีรูป)
-        const shipGrad = ctx.createLinearGradient(
-            player.x, player.y,
-            player.x, player.y + player.h
-        );
+        const shipGrad = ctx.createLinearGradient(player.x, player.y, player.x, player.y + player.h);
         shipGrad.addColorStop(0, "#00ffff");
         shipGrad.addColorStop(0.5, player.color);
         shipGrad.addColorStop(1, "#004d7f");
-        
         ctx.fillStyle = shipGrad;
         ctx.fillRect(player.x, player.y, player.w, player.h);
-        
-        // ✓ เพิ่มขอบวง Highlight
         ctx.strokeStyle = "#00ffff";
         ctx.lineWidth = 2;
         ctx.strokeRect(player.x, player.y, player.w, player.h);
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-
-// [แก้ไข 3] ฟังก์ชันวาดศัตรูแบบ 3D/Gradient
 function drawEnemy(en) {
-    // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
     if (sprites.enemy && sprites.enemy.complete) {
         ctx.drawImage(sprites.enemy, en.x, en.y, en.w, en.h);
     } else {
         let enemyGrad;
-        
-        // ✓ กระสุนบอสมีสีต่างกัน
         if (en.isBossBullet) {
             enemyGrad = ctx.createLinearGradient(en.x, en.y, en.x, en.y + en.h);
             enemyGrad.addColorStop(0, "#ff00ff");
@@ -347,32 +334,22 @@ function drawEnemy(en) {
             enemyGrad.addColorStop(1, "#8b0000");
             ctx.fillStyle = enemyGrad;
         }
-        
         ctx.fillRect(en.x, en.y, en.w, en.h);
-        
-        // ✓ เพิ่มขอบวง Highlight สีตรงข้าม
         ctx.strokeStyle = en.isBossBullet ? "#ff77ff" : "#ff9999";
         ctx.lineWidth = 1.5;
         ctx.strokeRect(en.x, en.y, en.w, en.h);
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-
-// [แก้ไข 4] ฟังก์ชันวาดกระสุนแบบ Gradient
 function drawBullet(b) {
-    // ✓ ถ้ามี Sprite ให้ใช้รูป ถ้าไม่มีให้วาด Gradient
     if (sprites.bullet && sprites.bullet.complete) {
         ctx.drawImage(sprites.bullet, b.x, b.y, b.w, b.h);
     } else {
         const bulletGrad = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
         bulletGrad.addColorStop(0, "#ffff99");
         bulletGrad.addColorStop(1, "#ffaa00");
-        
         ctx.fillStyle = bulletGrad;
         ctx.fillRect(b.x, b.y, b.w, b.h);
-        
-        // ✓ เพิ่ม Glow Effect
         ctx.shadowColor = "#ffaa00";
         ctx.shadowBlur = 8;
         ctx.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2);
@@ -380,61 +357,38 @@ function drawBullet(b) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-
-// [แก้ไข 5] ฟังก์ชันวาดไอเทมแบบ 3D/Glow
 function drawItem(it) {
-    // ✓ ถ้ามี Sprite สำหรับไอเทม ให้ใช้รูป
     if (sprites.items[it.label] && sprites.items[it.label].complete) {
         ctx.drawImage(sprites.items[it.label], it.x - 12, it.y - 12, 24, 24);
     } else {
         ctx.save();
-        
-        // ✓ วาดไอเทมแบบ 3D Sphere Effect
-        const itemGrad = ctx.createRadialGradient(
-            it.x - 5, it.y - 5, 0,
-            it.x, it.y, 12
-        );
+        const itemGrad = ctx.createRadialGradient(it.x - 5, it.y - 5, 0, it.x, it.y, 12);
         itemGrad.addColorStop(0, it.color);
         itemGrad.addColorStop(0.7, it.color);
         itemGrad.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-        
         ctx.shadowBlur = 25;
         ctx.shadowColor = it.color;
         ctx.fillStyle = itemGrad;
         ctx.beginPath();
         ctx.arc(it.x, it.y, 12, 0, Math.PI * 2);
         ctx.fill();
-        
-        // ✓ เพิ่มขอบสีขาว
         ctx.strokeStyle = "white";
         ctx.lineWidth = 2;
         ctx.stroke();
-        
-        // ✓ วาดตัวหนังสือ Label
         ctx.fillStyle = "white";
         ctx.font = "bold 14px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(it.label, it.x, it.y);
-        
         ctx.restore();
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-
-// [แก้ไข 6] ฟังก์ชันวาดบอสแบบ 3D/Gradient
 function drawBoss(boss) {
     if (sprites.boss && sprites.boss.complete) {
         ctx.drawImage(sprites.boss, boss.x, boss.y, boss.w, boss.h);
     } else {
-        // ✓ วาดบอสแบบ Gradient
-        const bossGrad = ctx.createLinearGradient(
-            boss.x, boss.y,
-            boss.x, boss.y + boss.h
-        );
-        
+        const bossGrad = ctx.createLinearGradient(boss.x, boss.y, boss.x, boss.y + boss.h);
         if (boss.isAngry) {
             bossGrad.addColorStop(0, "#ff6633");
             bossGrad.addColorStop(1, "#990000");
@@ -444,16 +398,12 @@ function drawBoss(boss) {
             bossGrad.addColorStop(1, "#4a0080");
             ctx.shadowColor = "#8e44ad";
         }
-        
         ctx.shadowBlur = boss.isAngry ? 30 : 15;
         ctx.fillStyle = bossGrad;
         ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
-        
-        // ✓ เพิ่มขอบ Highlight
         ctx.strokeStyle = boss.isAngry ? "#ffaa33" : "#dd88ff";
         ctx.lineWidth = 3;
         ctx.strokeRect(boss.x, boss.y, boss.w, boss.h);
-        
         ctx.shadowBlur = 0;
     }
 }
@@ -470,18 +420,12 @@ function resetGame() {
     tripleShotTimer = 0; hasShield = false; invincibilityTimer = 0;
     scoreElement.innerText = score; resize(); startCountdown();
 }
-// ฟังก์ชันสำหรับเช็กและบันทึกคะแนนสูงสุดใหม่
+
 function updateHighScore() {
-    // ถ้าคะแนนรอบปัจจุบัน (score) มากกว่า คะแนนสูงสุดที่เคยทำได้ (highScore)
     if (score > highScore) {
-        highScore = score; // อัปเดตตัวแปรคะแนนสูงสุดในเกม
-        
-        // บันทึกตัวเลขลงความจำของเบราว์เซอร์ (localStorage) ปิดเว็บเปิดใหม่ก็ไม่หาย
+        highScore = score;
         localStorage.setItem("spaceHighScore", highScore);
-        
-        // เปลี่ยนตัวเลขที่แสดงบนหน้าจอผู้เล่นให้เป็นคะแนนใหม่
         if (highScoreElement) highScoreElement.innerText = highScore;
-        
         console.log("🏆 New High Score: " + highScore);
     }
 }
@@ -500,40 +444,34 @@ window.addEventListener("touchmove", (e) => { player.x = e.touches[0].clientX - 
 
 pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม"; };
 startCountdown();
-// ฟังก์ชันสำหรับเช็กว่ากดยิงได้หรือยัง (ติด Cooldown ไหม)
+
 function attemptFire() {
     const currentTime = Date.now();
-    
-    // ถ้าเวลาปัจจุบัน หักลบ กับเวลายิงล่าสุด แล้วเกิน 150ms แปลว่ายิงได้
     if (currentTime - lastFireTime >= FIRE_COOLDOWN) {
-        shoot();                    // สั่งให้ยานยิงกระสุน (ใช้ฟังก์ชันเดิมของเกม)
-        lastFireTime = currentTime; // บันทึกเวลายิงล่าสุดไว้
+        shoot();                    
+        lastFireTime = currentTime; 
     }
 }
 
-// ระบบดักจับการกดปุ่มบนคีย์บอร์ด (เมื่อคอมพิวเตอร์ส่งค่าปุ่ม Spacebar มา)
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
-        e.preventDefault();  // ป้องกันหน้าจอมันเลื่อนลงเวลาโยก Spacebar
-        
-        // ถ้าเกมกำลังเล่นอยู่และไม่ได้กด Pause ให้สั่งยิง
+        e.preventDefault();  
         if (gameActive && !isPaused) {
             attemptFire();
         }
     }
 });
 
-// แถม: ระบบคลิกเมาส์ที่หน้าจอเพื่อให้ยังยิงได้เหมือนเดิม
 canvas.addEventListener("click", () => {
     if (gameActive && !isPaused) {
         attemptFire();
     }
 });
+
 window.addEventListener("keydown", (e) => {
     if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
         isPaused = !isPaused;
-        
         const pBtn = document.getElementById("pauseBtn");
         if (pBtn) {
             pBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม";
