@@ -35,14 +35,68 @@ body {
     text-shadow: 1px 1px 3px #000;
 }
 
-/* ปุ่มหยุดเกมแบบเข้มข้น ไม่กลืนกับพื้นหลัง */
+/* ═══════════════════════════════════════════════════════════════ */
+/* [แก้ไข 1] ปรับปรุงหน้า Pause - ทำให้สวยงามและศูนย์กลาง */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* ✓ Style ใหม่สำหรับหน้า Pause Overlay */
+#pauseOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 300;
+    backdrop-filter: blur(8px);
+}
+
+#pauseOverlay.active {
+    display: flex;
+}
+
+/* ✓ กล่อง Pause Menu ตรงกลาง */
+#pauseMenu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(142, 68, 173, 0.15));
+    border: 3px solid #00f2fe;
+    border-radius: 20px;
+    padding: 50px 80px;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(0, 242, 254, 0.3);
+    z-index: 310;
+}
+
+#pauseMenu h1 {
+    color: #00f2fe;
+    font-size: 72px;
+    font-weight: bold;
+    margin: 0 0 30px 0;
+    text-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+    letter-spacing: 3px;
+}
+
+#pauseMenu p {
+    color: #ffffff;
+    font-size: 18px;
+    margin: 10px 0;
+    opacity: 0.8;
+}
+
+/* ✓ ปุ่มหยุดเกม - อัพเดต */
 #pauseBtn {
     position: absolute;
     top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 20px;
+    /* ✓ เปลี่ยนจากตำแหน่งกลางไปมุมขวาเพื่อให้เห็นได้ชัด */
     padding: 12px 30px;
-    background: rgba(0, 0, 0, 0.7); /* พื้นหลังเข้มเพื่อให้ตัวหนังสือฟ้าเด่น */
+    background: rgba(0, 242, 254, 0.1);
     border: 2px solid #00f2fe;
     color: #00f2fe;
     border-radius: 25px;
@@ -50,14 +104,20 @@ body {
     font-weight: bold;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    transition: 0.3s;
+    transition: all 0.3s ease;
     z-index: 100;
+    font-size: 14px;
 }
 
 #pauseBtn:hover {
     background: #00f2fe;
     color: #000;
     box-shadow: 0 0 20px #00f2fe;
+    transform: scale(1.05);
+}
+
+#pauseBtn:active {
+    transform: scale(0.95);
 }
 
 #countdown {
