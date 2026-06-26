@@ -9,6 +9,10 @@ let score = 0;
 let highScore = localStorage.getItem("spaceHighScore") || 0;
 if (highScoreElement) highScoreElement.innerText = highScore;
 
+// [แก้ไข 1] ตัวแปรเพิ่มเติมสำหรับ Manual Fire System
+let lastFireTime = 0;           // เก็บเวลาการยิงครั้งล่าสุด
+const FIRE_COOLDOWN = 150;      // หน่วงเวลากว่าง 150 มิลลิวินาที (ปรับได้ 150-200)
+
 let gameActive = false;
 let isPaused = false;
 let lives = 3;
@@ -255,9 +259,37 @@ function startCountdown() {
     }, 1000);
 }
 
-setInterval(() => { if (gameActive && !isPaused) shoot(); }, 180);
 window.addEventListener("mousemove", (e) => { player.x = e.clientX - player.w/2; });
 window.addEventListener("touchmove", (e) => { player.x = e.touches[0].clientX - player.w/2; e.preventDefault(); }, {passive: false});
 
 pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม"; };
 startCountdown();
+// ฟังก์ชันสำหรับเช็กว่ากดยิงได้หรือยัง (ติด Cooldown ไหม)
+function attemptFire() {
+    const currentTime = Date.now();
+    
+    // ถ้าเวลาปัจจุบัน หักลบ กับเวลายิงล่าสุด แล้วเกิน 150ms แปลว่ายิงได้
+    if (currentTime - lastFireTime >= FIRE_COOLDOWN) {
+        shoot();                    // สั่งให้ยานยิงกระสุน (ใช้ฟังก์ชันเดิมของเกม)
+        lastFireTime = currentTime; // บันทึกเวลายิงล่าสุดไว้
+    }
+}
+
+// ระบบดักจับการกดปุ่มบนคีย์บอร์ด (เมื่อคอมพิวเตอร์ส่งค่าปุ่ม Spacebar มา)
+window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+        e.preventDefault();  // ป้องกันหน้าจอมันเลื่อนลงเวลาโยก Spacebar
+        
+        // ถ้าเกมกำลังเล่นอยู่และไม่ได้กด Pause ให้สั่งยิง
+        if (gameActive && !isPaused) {
+            attemptFire();
+        }
+    }
+});
+
+// แถม: ระบบคลิกเมาส์ที่หน้าจอเพื่อให้ยังยิงได้เหมือนเดิม
+canvas.addEventListener("click", () => {
+    if (gameActive && !isPaused) {
+        attemptFire();
+    }
+});
