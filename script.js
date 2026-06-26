@@ -108,25 +108,70 @@ function draw() {
 }
 
     if (isPaused) {
-        // หน้า Pause สีฟ้าใส (0.05) และแถบดำด้านบนกัน UI กลืน
-        ctx.fillStyle = "rgba(0, 242, 254, 0.05)"; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const topGrad = ctx.createLinearGradient(0, 0, 0, 100);
-        topGrad.addColorStop(0, "rgba(0, 0, 0, 0.7)");
-        topGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = topGrad;
-        ctx.fillRect(0, 0, canvas.width, 100);
+    // ✓ ใส่ Background blur ลึกขึ้น
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // ✓ เพิ่ม Gradient กรอบขอบ ให้ดูเป็นกล่อง
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const boxWidth = 500;
+    const boxHeight = 300;
+    
+    // สร้าง Gradient Border
+    const borderGrad = ctx.createLinearGradient(
+        centerX - boxWidth/2, centerY - boxHeight/2,
+        centerX + boxWidth/2, centerY + boxHeight/2
+    );
+    borderGrad.addColorStop(0, "#00f2fe");
+    borderGrad.addColorStop(0.5, "#8e44ad");
+    borderGrad.addColorStop(1, "#00f2fe");
+    
+    // วาดกรอบ
+    ctx.strokeStyle = borderGrad;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(
+        centerX - boxWidth/2, 
+        centerY - boxHeight/2, 
+        boxWidth, 
+        boxHeight, 
+        15
+    );
+    ctx.stroke();
 
-        ctx.save();
-        ctx.shadowBlur = 20; ctx.shadowColor = "#00f2fe";
-        ctx.fillStyle = "white"; ctx.font = "bold 60px Arial"; ctx.textAlign = "center";
-        ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
-        ctx.restore();
-        
-        requestAnimationFrame(draw);
-        return;
-    }
+    // วาดพื้นหลัง Semi-transparent
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.beginPath();
+    ctx.roundRect(
+        centerX - boxWidth/2, 
+        centerY - boxHeight/2, 
+        boxWidth, 
+        boxHeight, 
+        15
+    );
+    ctx.fill();
+
+    // ✓ วาด Text "PAUSED" พร้อม Glow
+    ctx.save();
+    ctx.shadowBlur = 25; 
+    ctx.shadowColor = "#00f2fe";
+    ctx.fillStyle = "#00f2fe"; 
+    ctx.font = "bold 70px Arial"; 
+    ctx.textAlign = "center";
+    ctx.fillText("⏸ PAUSED", centerX, centerY - 40);
+    
+    // ✓ เพิ่มข้อความ "Press P to Resume"
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; 
+    ctx.font = "16px Arial"; 
+    ctx.fillText("Press P to Resume | SPACEBAR to Fire", centerX, centerY + 50);
+    
+    ctx.restore();
+    
+    requestAnimationFrame(draw);
+    return;
+}
 
     ctx.save();
     if (shakeTimer > 0) {
@@ -478,5 +523,13 @@ window.addEventListener("keydown", (e) => {
 canvas.addEventListener("click", () => {
     if (gameActive && !isPaused) {
         attemptFire();
+    }
+});
+window.addEventListener("keydown", (e) => {
+    // ✓ เมื่อกด P (ตัวพิมพ์ใหญ่ หรือเล็ก)
+    if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        isPaused = !isPaused;
+        pauseBtn.innerText = isPaused ? "เล่นต่อ" : "หยุดเกม";
     }
 });
